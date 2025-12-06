@@ -10,7 +10,8 @@
         <router-link to="/comparison" active-class="active">代码对比</router-link>
       </nav>
       <div class="actions">
-        <a href="https://github.com" target="_blank" class="github-link">GitHub</a>
+        <!-- TODO: 之后改成后端模型的github获取链接，而不是前端代码的链接 -->
+        <a href="https://github.com/Arw-Wow/SmartCodeCheck" target="_blank" class="github-link">GitHub 项目链接</a>
       </div>
     </div>
   </header>
