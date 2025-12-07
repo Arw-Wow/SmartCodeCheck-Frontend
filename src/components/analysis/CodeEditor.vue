@@ -10,7 +10,7 @@
       class="mock-editor"
       :value="modelValue"
       @input="$emit('update:modelValue', $event.target.value)"
-      placeholder="// 在此处粘贴 LLM 生成的代码..."
+      placeholder="// 在此处粘贴待检测的代码..."
       spellcheck="false"
     ></textarea>
   </div>

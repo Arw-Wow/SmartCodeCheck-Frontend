@@ -1,6 +1,6 @@
 <template>
   <footer class="site-footer">
-    <p>© 2025 LLM CodeEval Research Team. All rights reserved.</p>
+    <p>© 2025 Arw-Wow. All rights reserved. | Contact Me: hekaifeng70@gmail.com</p>
   </footer>
 </template>
 
