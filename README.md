@@ -2,6 +2,7 @@
 
 ### 项目结构
 
+```
 SmartCodeCheck-Frontend/
 ├── node_modules/
 ├── public/
@@ -29,3 +30,4 @@ SmartCodeCheck-Frontend/
 │   └── main.js          // 应用入口文件
 ├── index.html       // HTML入口文件
 └── package.json
+```
