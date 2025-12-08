@@ -31,3 +31,16 @@ SmartCodeCheck-Frontend/
 ├── index.html       // HTML入口文件
 └── package.json
 ```
+
+### 运行后端
+
+1.  **安装依赖**:
+
+    ```bash
+    ```
+
+2.  **启动服务**:
+
+    ```bash
+    npm run dev
+    ```

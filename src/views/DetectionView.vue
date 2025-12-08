@@ -5,6 +5,7 @@
       <div class="form-group">
         <label>编程语言</label>
         <select v-model="language">
+          <option value="Auto">Auto</option>
           <option value="Python">Python</option>
           <option value="Java">Java</option>
           <option value="C++">C++</option>
@@ -66,7 +67,7 @@
 import { ref } from 'vue'
 import DimensionSelector from '@/components/analysis/DimensionSelector.vue'
 import CodeEditor from '@/components/analysis/CodeEditor.vue'
-import api from '@/api' // 引入我们刚写的 api
+import api from '@/api' // 引入 api
 
 const language = ref('Python')
 const codeContent = ref('def example():\n    print("Hello World")')

@@ -1,12 +1,15 @@
 <template>
   <div class="container comparison-view">
     <div class="toolbar">
-      <h2>模型代码对比 (A/B Test)</h2>
+      <h2>模型代码对比</h2>
       
       <div class="controls">
          <select v-model="language">
+            <option value="Auto">Auto</option>
             <option value="Python">Python</option>
             <option value="Java">Java</option>
+            <option value="C++">C++</option>
+            <option value="JavaScript">JavaScript</option>
          </select>
          <button class="btn btn-primary" @click="handleCompare" :disabled="isComparing">
             {{ isComparing ? '对比分析中...' : '运行对比分析' }}
@@ -97,6 +100,7 @@ const handleCompare = async () => {
 .comparison-view { padding-top: 20px; padding-bottom: 50px; }
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .controls { display: flex; gap: 10px; }
+/* select { width: 100%; padding: 8px; background: var(--bg-color); color: #fff; border: 1px solid var(--border-color); border-radius: 4px; } */
 .split-pane { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 400px; margin-bottom: 30px; }
 .pane { display: flex; flex-direction: column; }
 .pane-head { margin-bottom: 10px; font-weight: bold; color: var(--accent-color); }
