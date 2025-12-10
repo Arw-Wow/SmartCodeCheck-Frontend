@@ -23,74 +23,103 @@
       </div>
     </div>
 
-    <textarea
-      v-show="mode === 'paste'"
-      class="mock-editor"
-      :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
-      placeholder="// 在此处粘贴代码，或使用上传功能..."
-      spellcheck="false"
-    ></textarea>
-
-    <div v-show="mode === 'upload'" class="upload-area" @dragover.prevent @drop.prevent="handleDrop">
-      <div class="upload-box">
-        <div class="icon">☁️</div>
-        <p>将文件拖拽至此，或</p>
-        <label class="upload-btn">
-          点击选择文件
-          <input type="file" ref="fileInput" @change="handleFileSelect" accept=".py,.java,.cpp,.js,.ts,.go,.c,.h" />
-        </label>
-        <p class="limit-tip">支持 .py, .java, .cpp 等常见格式 (Max 10MB)</p>
-        <p class="limit-tip">上传后将自动读取内容至编辑器</p>
+    <div class="editor-body-area">
+      
+      <div v-if="mode === 'paste'" class="cm-layout-fixer">
+        <codemirror
+          v-model="code"
+          placeholder="// 在此处粘贴代码，或使用上传功能..."
+          :style="{ height: '100%', fontSize: '14px' }"
+          :autofocus="true"
+          :indent-with-tab="true"
+          :tab-size="4"
+          :extensions="extensions"
+          @change="handleChange"
+        />
       </div>
+
+      <div v-else class="upload-area" @dragover.prevent @drop.prevent="handleDrop">
+        <div class="upload-box">
+          <div class="icon">☁️</div>
+          <p>将文件拖拽至此，或</p>
+          <label class="upload-btn">
+            点击选择文件
+            <input type="file" ref="fileInput" @change="handleFileSelect" accept=".py,.java,.cpp,.js,.ts,.go,.c,.h" />
+          </label>
+          <p class="limit-tip">支持 .py, .java, .cpp 等常见格式 (Max 1MB)</p>
+          <p class="limit-tip">上传后将自动读取内容至编辑器</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { Codemirror } from 'vue-codemirror'
+import { EditorView } from '@codemirror/view'
+import { oneDark } from '@codemirror/theme-one-dark'
+import { python } from '@codemirror/lang-python'
+import { java } from '@codemirror/lang-java'
+import { cpp } from '@codemirror/lang-cpp'
+import { javascript } from '@codemirror/lang-javascript'
+import { go } from '@codemirror/lang-go'
 
 const props = defineProps({
   modelValue: String,
-  language: { type: String, default: 'Text' }
+  language: { type: String, default: 'Python' }
 })
 const emit = defineEmits(['update:modelValue'])
 
-const mode = ref('paste') // 'paste' | 'upload'
-const fileInput = ref(null)
+const mode = ref('paste')
+const code = ref(props.modelValue)
 
-// 处理文件读取逻辑
+watch(() => props.modelValue, (newVal) => {
+  if (newVal !== code.value) {
+    code.value = newVal
+  }
+})
+
+const handleChange = (newVal) => {
+  emit('update:modelValue', newVal)
+}
+
+const extensions = computed(() => {
+  const exts = [oneDark, EditorView.lineWrapping]
+  switch (props.language) {
+    case 'Python': exts.push(python()); break
+    case 'Java': exts.push(java()); break
+    case 'C++': case 'C': exts.push(cpp()); break
+    case 'JavaScript': case 'TypeScript': exts.push(javascript()); break
+    case 'Go': exts.push(go()); break
+    default: break
+  }
+  return exts
+})
+
+// --- 文件上传逻辑 ---
 const processFile = (file) => {
-  // 1. 格式校验 (简单的后缀名检查)
   const validExts = ['.py', '.java', '.cpp', '.js', '.ts', '.go', '.c', '.h', '.txt', '.md']
   const isExtValid = validExts.some(ext => file.name.toLowerCase().endsWith(ext))
+  const maxSize = 1 * 1024 * 1024 
   
-  // 2. 大小校验 (10MB)
-  const maxSize = 10 * 1024 * 1024 
-  
-  if (!isExtValid) {
-    return alert(`不支持的文件格式: ${file.name}\n请上传源码文件。`)
-  }
-  if (file.size > maxSize) {
-    return alert(`文件过大 (${(file.size/1024).toFixed(1)}KB)。\n请上传 10MB 以内的代码文件。`)
-  }
+  if (!isExtValid) return alert(`不支持的文件格式: ${file.name}`)
+  if (file.size > maxSize) return alert(`文件过大`)
 
-  // 3. 读取内容
   const reader = new FileReader()
   reader.onload = (e) => {
     const content = e.target.result
+    code.value = content
     emit('update:modelValue', content)
-    // 读取成功后自动切回编辑模式，方便用户查看
     mode.value = 'paste'
   }
-  reader.onerror = () => alert('文件读取失败')
   reader.readAsText(file)
 }
 
 const handleFileSelect = (event) => {
   const file = event.target.files[0]
   if (file) processFile(file)
-  // 清空 input 允许重复上传同名文件
   event.target.value = '' 
 }
 
@@ -101,27 +130,64 @@ const handleDrop = (event) => {
 </script>
 
 <style scoped>
+/* 1. 最外层包装器 */
 .code-editor-wrapper {
-  background: #0d1117;
+  background: #000000;
   border: 1px solid var(--border-color);
   border-radius: 6px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 400px;
-  overflow: hidden;
+  height: 100%;       /* 必须设置高度 */
+  overflow: hidden;   /* 隐藏超出圆角的部分 */
 }
 
-/* 顶部 Tab 样式 */
+/* 2. 顶部 Header (固定高度) */
 .editor-header {
+  flex: 0 0 40px;     /* 固定 40px 高度，不伸缩 */
   background: var(--panel-color);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 10px;
-  height: 40px;
 }
+
+/* 3. 主体区域容器 (占据剩余空间) */
+.editor-body-area {
+  flex: 1;            /* 占据 Header 之外的所有空间 */
+  position: relative; /* 作为绝对定位子元素的锚点 */
+  min-height: 0;      /* 关键：允许 flex 子项收缩，防止被内容撑大 */
+  width: 100%;
+}
+
+/* 4. CodeMirror 的绝对定位修正层 */
+.cm-layout-fixer {
+  position: absolute;
+  top: 0; bottom: 0; left: 0; right: 0;
+  height: 100%;
+}
+
+/* 5. CodeMirror 深度样式覆盖 */
+:deep(.cm-editor) {
+  height: 100%; 
+  outline: none;
+  background: #0d0d0d !important;
+}
+
+:deep(.cm-scroller) {
+  overflow: auto !important; /* 强制开启滚动 */
+  height: 100% !important;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  line-height: 1.6;
+}
+
+:deep(.cm-gutters) {
+  background-color: var(--panel-color);
+  border-right: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+/* --- 原有样式保持不变 --- */
 .tabs { display: flex; height: 100%; }
 .tab-btn {
   background: transparent;
@@ -136,26 +202,11 @@ const handleDrop = (event) => {
 }
 .tab-btn:hover { color: var(--text-primary); }
 .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
-
 .lang-tag { font-size: 0.75rem; color: var(--text-secondary); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; }
 
-/* 编辑器样式 */
-.mock-editor {
-  flex: 1;
-  background: transparent;
-  color: #e6edf3;
-  border: none;
-  padding: 15px;
-  font-family: 'Fira Code', monospace;
-  font-size: 14px;
-  resize: none;
-  outline: none;
-  line-height: 1.5;
-}
-
-/* 上传区域样式 */
+/* 上传区域适配 */
 .upload-area {
-  flex: 1;
+  height: 100%; /* 填满 .editor-body-area */
   display: flex;
   justify-content: center;
   align-items: center;

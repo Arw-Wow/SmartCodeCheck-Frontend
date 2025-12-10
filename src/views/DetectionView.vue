@@ -173,6 +173,13 @@ const getScoreClass = (score) => {
 
 <style scoped>
 /* 布局样式 */
+.container {
+  width: 100%;
+  max-width: 1300px;
+  padding: 0 20px; /* 保留少量左右内边距，避免内容贴边 */
+  margin: 0 auto; /* 保持居中 */
+}
+
 .detection-layout {
   display: grid;
   grid-template-columns: 280px 1fr 320px; /* 稍微加宽两边 */
