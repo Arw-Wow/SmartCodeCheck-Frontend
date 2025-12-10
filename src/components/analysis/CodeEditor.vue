@@ -40,7 +40,7 @@
           点击选择文件
           <input type="file" ref="fileInput" @change="handleFileSelect" accept=".py,.java,.cpp,.js,.ts,.go,.c,.h" />
         </label>
-        <p class="limit-tip">支持 .py, .java, .cpp 等常见格式 (Max 1MB)</p>
+        <p class="limit-tip">支持 .py, .java, .cpp 等常见格式 (Max 10MB)</p>
         <p class="limit-tip">上传后将自动读取内容至编辑器</p>
       </div>
     </div>
@@ -65,14 +65,14 @@ const processFile = (file) => {
   const validExts = ['.py', '.java', '.cpp', '.js', '.ts', '.go', '.c', '.h', '.txt', '.md']
   const isExtValid = validExts.some(ext => file.name.toLowerCase().endsWith(ext))
   
-  // 2. 大小校验 (1MB)
-  const maxSize = 1 * 1024 * 1024 
+  // 2. 大小校验 (10MB)
+  const maxSize = 10 * 1024 * 1024 
   
   if (!isExtValid) {
     return alert(`不支持的文件格式: ${file.name}\n请上传源码文件。`)
   }
   if (file.size > maxSize) {
-    return alert(`文件过大 (${(file.size/1024).toFixed(1)}KB)。\n请上传 1MB 以内的代码文件。`)
+    return alert(`文件过大 (${(file.size/1024).toFixed(1)}KB)。\n请上传 10MB 以内的代码文件。`)
   }
 
   // 3. 读取内容
