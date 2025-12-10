@@ -12,15 +12,15 @@
     <div class="features">
       <div class="feature-card">
         <h3>🔍 深度审计</h3>
-        <p>基于微调模型，自动识别逻辑漏洞与安全隐患。</p>
+        <p>基于微调模型，自动识别代码质量问题。</p>
       </div>
       <div class="feature-card">
         <h3>⚖️ A/B 对比</h3>
-        <p>直观呈现两个不同模型生成的代码差异。</p>
+        <p>直观呈现两段不同代码的差异。</p>
       </div>
       <div class="feature-card">
-        <h3>📊 可视化报告</h3>
-        <p>生成雷达图与详细评分，支持导出PDF。</p>
+        <h3>📊 详细报告</h3>
+        <p>生成详细检测报告，支持导出 JSON 文件。</p>
       </div>
     </div>
   </div>

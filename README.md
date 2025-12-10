@@ -8,6 +8,7 @@ SmartCodeCheck-Frontend/
 ├── public/
 │   └── favicon.ico
 ├── src/
+│   ├── api/
 │   ├── assets/          // 静态资源（CSS, images, fonts）
 │   ├── components/      // 可复用的UI组件
 │   │   ├── common/
@@ -27,7 +28,8 @@ SmartCodeCheck-Frontend/
 │   │   ├── DetectionView.vue    // 质量问题检测页（核心）
 │   │   └── ComparisonView.vue   // 代码对比页（核心）
 │   ├── App.vue          // 根组件
-│   └── main.js          // 应用入口文件
+│   ├── main.js          // 应用入口文件
+│   └── store.js         // 全局存储
 ├── index.html       // HTML入口文件
 └── package.json
 ```

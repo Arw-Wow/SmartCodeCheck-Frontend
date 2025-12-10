@@ -48,7 +48,15 @@
     </main>
 
     <aside class="result-sidebar">
-      <h3>检测报告</h3>
+      <div class="sidebar-header">
+        <h3>检测报告</h3>
+        <div v-if="store.detection.results" class="export-tools">
+          <button @click="exportJSON" class="btn-icon" title="导出 JSON">JSON</button>
+          <button @click="exportMD" class="btn-icon" title="导出 Markdown">Markdown</button>
+          <!-- ⬇️暂时不要PDF，科研人员不咋用，并且效果也不好，并且结果不适合表达为PDF -->
+          <!-- <button @click="printPDF" class="btn-icon" title="打印/存为 PDF">🖨️</button> -->
+        </div>
+      </div>
       
       <div v-if="!store.detection.results && !isAnalyzing" class="empty-state">
         请配置并点击开始检测。
@@ -90,6 +98,7 @@ import { store } from '@/store' // 引入全局 Store
 import api from '@/api'
 import DimensionSelector from '@/components/analysis/DimensionSelector.vue'
 import CodeEditor from '@/components/analysis/CodeEditor.vue'
+import { downloadFile, generateDetectionMarkdown } from '@/utils/export'
 
 const isAnalyzing = ref(false)
 const errorMessage = ref('')
@@ -140,6 +149,21 @@ const handleStop = () => {
   }
 }
 
+// 导出功能
+const exportJSON = () => {
+  const data = JSON.stringify(store.detection.results, null, 2)
+  downloadFile(data, `analysis_report_${Date.now()}.json`, 'application/json')
+}
+
+const exportMD = () => {
+  const md = generateDetectionMarkdown(store.detection.results, store.detection.language)
+  downloadFile(md, `analysis_report_${Date.now()}.md`, 'text/markdown')
+}
+
+const printPDF = () => {
+  window.print()
+}
+
 const getScoreClass = (score) => {
   if (score >= 90) return 'text-success'
   if (score >= 70) return 'text-warning'
@@ -163,6 +187,21 @@ select { width: 100%; padding: 8px; background: var(--bg-color); color: #fff; bo
 /* 按钮样式 */
 .btn-danger { background: var(--danger); color: white; transition: all 0.2s; }
 .btn-danger:hover { background: #b91c1c; }
+
+/* 打印样式 */
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area { position: absolute; left: 0; top: 0; width: 100%; color: black; }
+  .issue-item { break-inside: avoid; border: 1px solid #ccc; color: black; }
+  .badge { border: 1px solid #000; }
+}
+
+/* 导出工具栏样式 */
+.sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.export-tools { display: flex; gap: 5px; }
+.btn-icon { background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; transition: all 0.2s; }
+.btn-icon:hover { color: var(--primary-color); border-color: var(--primary-color); }
 
 /* 结果样式 */
 .score-card { text-align: center; margin-bottom: 20px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; }

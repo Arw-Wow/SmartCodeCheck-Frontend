@@ -3,7 +3,7 @@
     
     <div class="top-bar">
       <div class="header-left">
-        <h2>模型代码对比 (A/B Test)</h2>
+        <h2>代码对比</h2>
       </div>
 
       <div class="header-controls">
@@ -45,19 +45,28 @@
 
     <div class="split-pane">
       <div class="pane">
-        <div class="pane-head">模型 A (Code A)</div>
+        <div class="pane-head">Code A</div>
         <CodeEditor v-model="store.comparison.codeA" :language="store.comparison.language" />
       </div>
 
       <div class="pane">
-        <div class="pane-head">模型 B (Code B)</div>
+        <div class="pane-head">Code B</div>
         <CodeEditor v-model="store.comparison.codeB" :language="store.comparison.language" />
       </div>
     </div>
     
-    <div v-if="store.comparison.results" class="diff-result">
+    <div v-if="store.comparison.results" id="diff-print-area" class="diff-result">
+      
+      <div class="result-header">
+        <h3>🏆 分析报告</h3>
+        <div class="export-group">
+          <button @click="exportJSON" class="btn-xs" title="导出 JSON">JSON</button>
+          <button @click="exportMD" class="btn-xs" title="导出 Markdown">Markdown</button>
+          <!-- <button @click="printPDF" class="btn-xs" title="打印或保存为 PDF">🖨️ PDF</button> -->
+        </div>
+      </div>
+
       <div class="summary-section">
-        <h3>🏆 对比总结</h3>
         <p class="summary-text">{{ store.comparison.results.summary }}</p>
       </div>
 
@@ -107,6 +116,7 @@
 import { ref, computed } from 'vue'
 import { store } from '@/store'
 import api from '@/api'
+import { downloadFile, generateComparisonMarkdown } from '@/utils/export'
 import CodeEditor from '@/components/analysis/CodeEditor.vue'
 import DimensionSelector from '@/components/analysis/DimensionSelector.vue'
 
@@ -148,6 +158,21 @@ const handleCompare = async () => {
 const handleStop = () => {
   if (abortController) abortController.abort()
 }
+
+// 导出功能实现
+const exportJSON = () => {
+  const data = JSON.stringify(store.comparison.results, null, 2)
+  downloadFile(data, `comparison_report_${Date.now()}.json`, 'application/json')
+}
+
+const exportMD = () => {
+  const md = generateComparisonMarkdown(store.comparison.results, store.comparison.language)
+  downloadFile(md, `comparison_report_${Date.now()}.md`, 'text/markdown')
+}
+
+const printPDF = () => {
+  window.print()
+}
 </script>
 
 <style scoped>
@@ -172,9 +197,31 @@ summary:hover { color: var(--primary-color); }
 .pane { display: flex; flex-direction: column; }
 .pane-head { margin-bottom: 10px; font-weight: bold; color: var(--accent-color); font-size: 1.1rem; }
 
-/* 结果区域 */
+/* 结果区域容器 */
 .diff-result { background: var(--panel-color); border-radius: 8px; padding: 30px; border: 1px solid var(--border-color); }
-.summary-text { font-size: 1.1rem; line-height: 1.6; color: var(--text-primary); margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+
+/* 新增：结果头部样式 */
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+.result-header h3 { margin: 0; font-size: 1.4rem; display: flex; align-items: center; gap: 10px; }
+
+/* 导出按钮样式 */
+.export-group { display: flex; gap: 8px; }
+.btn-xs { 
+  padding: 4px 10px; 
+  font-size: 0.8rem; 
+  background: var(--bg-color); 
+  border: 1px solid var(--border-color); 
+  color: var(--text-secondary); 
+  border-radius: 4px; 
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-xs:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
+
+/* 总结文本 */
+.summary-section { margin-bottom: 30px; }
+.summary-text { font-size: 1.1rem; line-height: 1.6; color: var(--text-primary); }
+
 .metrics-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 40px; }
 
 /* 评分卡片 */
@@ -200,4 +247,13 @@ summary:hover { color: var(--primary-color); }
 .comparing-overlay { text-align: center; padding: 40px; }
 .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid var(--primary-color); width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* 打印样式适配 */
+@media print {
+  body * { visibility: hidden; }
+  #diff-print-area, #diff-print-area * { visibility: visible; }
+  #diff-print-area { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; }
+  .diff-result { background: white !important; color: black !important; }
+  .export-group { display: none !important; } /* 打印时隐藏导出按钮 */
+}
 </style>
