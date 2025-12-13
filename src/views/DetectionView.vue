@@ -14,6 +14,17 @@
           <option value="Go">Go</option>
         </select>
       </div>
+
+      <div class="form-group">
+        <label>模型选择</label>
+        <select v-model="store.detection.modelName">
+          <option value="deepseek-v3.1">deepseek-v3.1</option>
+          <option value="qwen3-coder-plus">qwen3-coder-plus</option>
+          <option value="gpt-5-mini">gpt-5-mini</option>
+          <option value="gpt-5">gpt-5</option>
+          <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
+        </select>
+      </div>
       
       <div class="form-group">
         <label>检测维度</label>
@@ -129,6 +140,7 @@ const handleAnalyze = async () => {
     const payload = {
       code_content: store.detection.code,
       language: store.detection.language,
+      model_name: store.detection.modelName,
       dimensions: store.detection.selectedDimensions,
       custom_definitions: store.detection.customDefinitions, // 发送自定义定义
       generation_instruction: store.detection.generationInstruction?.trim() || undefined

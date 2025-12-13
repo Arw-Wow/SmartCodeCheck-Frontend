@@ -28,6 +28,25 @@
     <div class="config-panel">
       <details>
         <summary>
+          🤖 模型选择
+        </summary>
+        <div class="panel-content">
+          <div class="model-group">
+            <button
+              v-for="m in modelOptions"
+              :key="m"
+              type="button"
+              class="model-btn"
+              :class="{ active: store.comparison.modelName === m }"
+              @click="store.comparison.modelName = m"
+            >
+              {{ m }}
+            </button>
+          </div>
+        </div>
+      </details>
+      <details>
+        <summary>
           ⚙️ 维度配置 
           <span class="summary-info">
             (已选 {{ store.comparison.selectedDimensions.length }} 项 
@@ -135,6 +154,15 @@ let abortController = null
 
 const customCount = computed(() => Object.keys(store.comparison.customDefinitions).length)
 
+// 可选模型列表（单选）
+const modelOptions = [
+  'deepseek-v3.1',
+  'qwen3-coder-plus',
+  'gpt-5-mini',
+  'gpt-5',
+  'gemini-3-pro-preview'
+]
+
 const handleCompare = async () => {
   if (!store.comparison.codeA || !store.comparison.codeB) return alert('请确保两边都输入了代码')
   if (store.comparison.selectedDimensions.length === 0) return alert('请至少选择一个对比维度')
@@ -148,6 +176,7 @@ const handleCompare = async () => {
       code_a: store.comparison.codeA,
       code_b: store.comparison.codeB,
       language: store.comparison.language,
+      model_name: store.comparison.modelName,
       dimensions: store.comparison.selectedDimensions,
       custom_definitions: store.comparison.customDefinitions,
       generation_instruction: store.comparison.generationInstruction?.trim() || undefined
@@ -271,4 +300,24 @@ summary:hover { color: var(--primary-color); }
 /* 指令编辑框样式 */
 .instruction-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; padding: 8px 12px; }
 .instruction-input { width: 100%; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; }
+
+/* 模型按钮组（单选） */
+.model-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.model-btn { 
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+.model-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.model-btn.active { 
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15) inset;
+}
 </style>

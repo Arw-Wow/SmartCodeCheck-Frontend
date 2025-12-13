@@ -7,6 +7,7 @@ export const store = reactive({
   detection: {
     language: 'Python',
     code: 'def example():\n    print("Hello World")',
+    modelName: 'deepseek-v3.1',
     selectedDimensions: ['correctness', 'security'],
     customDefinitions: {}, // { "维度名": "定义" }
     generationInstruction: '',
@@ -17,6 +18,7 @@ export const store = reactive({
     language: 'Python',
     codeA: '',
     codeB: '',
+    modelName: 'deepseek-v3.1',
     selectedDimensions: ['correctness', 'efficiency'],
     customDefinitions: {},
     generationInstruction: '',
