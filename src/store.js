@@ -9,6 +9,7 @@ export const store = reactive({
     code: 'def example():\n    print("Hello World")',
     selectedDimensions: ['correctness', 'security'],
     customDefinitions: {}, // { "维度名": "定义" }
+    generationInstruction: '',
     results: null
   },
   // 对比页状态
@@ -18,6 +19,7 @@ export const store = reactive({
     codeB: '',
     selectedDimensions: ['correctness', 'efficiency'],
     customDefinitions: {},
+    generationInstruction: '',
     results: null
   }
 })

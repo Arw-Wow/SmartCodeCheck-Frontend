@@ -43,6 +43,16 @@
       </details>
     </div>
 
+    <details class="instruction-box">
+      <summary>📝 统一代码生成指令（可选，A/B 共用）</summary>
+      <textarea
+        v-model="store.comparison.generationInstruction"
+        class="instruction-input"
+        rows="8"
+        placeholder="例如：实现相同功能的两段代码应遵循该指令的接口命名与异常处理约定。"
+      ></textarea>
+    </details>
+    
     <div class="split-pane">
       <div class="pane">
         <div class="pane-head">Code A</div>
@@ -139,7 +149,8 @@ const handleCompare = async () => {
       code_b: store.comparison.codeB,
       language: store.comparison.language,
       dimensions: store.comparison.selectedDimensions,
-      custom_definitions: store.comparison.customDefinitions
+      custom_definitions: store.comparison.customDefinitions,
+      generation_instruction: store.comparison.generationInstruction?.trim() || undefined
     }
 
     const res = await api.compareCodes(payload, abortController.signal)
@@ -256,4 +267,8 @@ summary:hover { color: var(--primary-color); }
   .diff-result { background: white !important; color: black !important; }
   .export-group { display: none !important; } /* 打印时隐藏导出按钮 */
 }
+
+/* 指令编辑框样式 */
+.instruction-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; padding: 8px 12px; }
+.instruction-input { width: 100%; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; }
 </style>

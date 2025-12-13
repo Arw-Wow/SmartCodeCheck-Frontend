@@ -44,6 +44,15 @@
     </aside>
 
     <main class="editor-section">
+      <details class="instruction-box">
+        <summary>📝 代码生成指令（可选，点击展开）</summary>
+        <textarea
+          v-model="store.detection.generationInstruction"
+          class="instruction-input"
+          rows="8"
+          placeholder="例如：请用Python实现一个二分查找函数，要求包含输入校验与时间复杂度说明。"
+        ></textarea>
+      </details>
       <CodeEditor v-model="store.detection.code" :language="store.detection.language" />
     </main>
 
@@ -121,7 +130,8 @@ const handleAnalyze = async () => {
       code_content: store.detection.code,
       language: store.detection.language,
       dimensions: store.detection.selectedDimensions,
-      custom_definitions: store.detection.customDefinitions // 发送自定义定义
+      custom_definitions: store.detection.customDefinitions, // 发送自定义定义
+      generation_instruction: store.detection.generationInstruction?.trim() || undefined
     }
 
     // 3. 调用 API (传入 signal)
@@ -230,4 +240,8 @@ select { width: 100%; padding: 8px; background: var(--bg-color); color: #fff; bo
 .tip { display: block; margin-top: 10px; font-size: 0.8rem; opacity: 0.7; }
 .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid var(--primary-color); width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 15px;}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* 指令编辑框样式 */
+.instruction-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; padding: 8px 12px; }
+.instruction-input { width: 100%; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; }
 </style>
