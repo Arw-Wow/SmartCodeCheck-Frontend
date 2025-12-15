@@ -256,4 +256,20 @@ select { width: 100%; padding: 8px; background: var(--bg-color); color: #fff; bo
 /* 指令编辑框样式 */
 .instruction-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; padding: 8px 12px; }
 .instruction-input { width: 100%; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; }
+
+/* ========== 调整CodeEditor高度 ========== */
+.editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto; /* 防止内容溢出 */
+}
+
+/* 控制代码编辑器容器高度 */
+.code-editor-container {
+  flex: 1;
+  max-height: 40vh; /* 核心：将编辑器最大高度限制为视口的40% */
+  min-height: 200px; /* 保证最小高度，避免编辑器过矮 */
+  overflow-y: auto;
+}
 </style>

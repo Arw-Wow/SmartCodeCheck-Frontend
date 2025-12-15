@@ -20,7 +20,7 @@
       </div>
       <div class="feature-card">
         <h3>📊 详细报告</h3>
-        <p>生成详细检测报告，支持导出 JSON 文件。</p>
+        <p>生成详细检测报告，支持导出 JSON / Markdown 格式。</p>
       </div>
     </div>
   </div>
