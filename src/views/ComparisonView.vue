@@ -240,7 +240,7 @@ summary:hover { color: var(--primary-color); }
 /* 结果区域容器 */
 .diff-result { background: var(--panel-color); border-radius: 8px; padding: 30px; border: 1px solid var(--border-color); }
 
-/* 新增：结果头部样式 */
+/* 结果头部样式 */
 .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
 .result-header h3 { margin: 0; font-size: 1.4rem; display: flex; align-items: center; gap: 10px; }
 
