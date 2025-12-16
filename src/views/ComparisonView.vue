@@ -56,7 +56,6 @@
         <div class="panel-content">
           <DimensionSelector 
             v-model="store.comparison.selectedDimensions" 
-            v-model:customDefinitions="store.comparison.customDefinitions"
           />
         </div>
       </details>
@@ -143,16 +142,19 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { store } from '@/store'
+import { useGlobalDataStore } from '@/stores/index'
 import api from '@/api'
 import { downloadFile, generateComparisonMarkdown } from '@/utils/export'
 import CodeEditor from '@/components/analysis/CodeEditor.vue'
 import DimensionSelector from '@/components/analysis/DimensionSelector.vue'
 
+// 创建store实例
+const store = useGlobalDataStore()
+
 const isComparing = ref(false)
 let abortController = null
 
-const customCount = computed(() => Object.keys(store.comparison.customDefinitions).length)
+const customCount = computed(() => Object.keys(store.customDefinitions).length)
 
 // 可选模型列表（单选）
 const modelOptions = [
@@ -178,7 +180,7 @@ const handleCompare = async () => {
       language: store.comparison.language,
       model_name: store.comparison.modelName,
       dimensions: store.comparison.selectedDimensions,
-      custom_definitions: store.comparison.customDefinitions,
+      custom_definitions: store.customDefinitions,
       generation_instruction: store.comparison.generationInstruction?.trim() || undefined
     }
 

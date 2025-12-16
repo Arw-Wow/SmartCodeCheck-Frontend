@@ -30,7 +30,6 @@
         <label>检测维度</label>
         <DimensionSelector 
           v-model="store.detection.selectedDimensions" 
-          v-model:customDefinitions="store.detection.customDefinitions"
         />
       </div>
 
@@ -114,11 +113,14 @@
 
 <script setup>
 import { ref } from 'vue'
-import { store } from '@/store' // 引入全局 Store
+import { useGlobalDataStore } from '@/stores/index'
 import api from '@/api'
 import DimensionSelector from '@/components/analysis/DimensionSelector.vue'
 import CodeEditor from '@/components/analysis/CodeEditor.vue'
 import { downloadFile, generateDetectionMarkdown } from '@/utils/export'
+
+// 创建store实例
+const store = useGlobalDataStore()
 
 const isAnalyzing = ref(false)
 const errorMessage = ref('')
@@ -142,7 +144,7 @@ const handleAnalyze = async () => {
       language: store.detection.language,
       model_name: store.detection.modelName,
       dimensions: store.detection.selectedDimensions,
-      custom_definitions: store.detection.customDefinitions, // 发送自定义定义
+      custom_definitions: store.customDefinitions, // 发送自定义定义
       generation_instruction: store.detection.generationInstruction?.trim() || undefined
     }
 
