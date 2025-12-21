@@ -65,19 +65,21 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useGlobalDataStore } from '../../stores'
+import { storeToRefs } from 'pinia'
+
+const store = useGlobalDataStore()
+// 结构store中的ref变量
+const { customDefinitions } = storeToRefs(store)
 
 const props = defineProps({
   modelValue: {
     type: Array,
     default: () => []
-  },
-  customDefinitions: {
-    type: Object,
-    default: () => ({})
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'update:customDefinitions'])
+const emit = defineEmits(['update:modelValue'])
 
 const defaultOptions = [
   { id: 'correctness', name: '正确性' },
@@ -91,7 +93,7 @@ const isAdding = ref(false)
 const newDimName = ref('')
 const newDimDesc = ref('')
 
-const hasCustomDims = computed(() => Object.keys(props.customDefinitions).length > 0)
+const hasCustomDims = computed(() => Object.keys(customDefinitions).length > 0)
 
 // 切换选中状态
 const toggle = (id) => {
@@ -112,8 +114,8 @@ const confirmAdd = () => {
   const desc = newDimDesc.value.trim()
 
   // 1. 更新定义对象
-  const newDefs = { ...props.customDefinitions, [name]: desc }
-  emit('update:customDefinitions', newDefs)
+  const newDefs = { [name]: desc }
+  store.addCustomDefinition(newDefs)
 
   // 2. 自动选中新维度
   if (!props.modelValue.includes(name)) {
@@ -128,9 +130,7 @@ const confirmAdd = () => {
 // 删除自定义维度
 const removeCustom = (name) => {
   // 1. 从定义中移除
-  const newDefs = { ...props.customDefinitions }
-  delete newDefs[name]
-  emit('update:customDefinitions', newDefs)
+  store.deleteCustomDefinition(name)
 
   // 2. 如果已选中，从选中列表中移除
   if (props.modelValue.includes(name)) {
