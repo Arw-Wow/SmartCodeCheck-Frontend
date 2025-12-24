@@ -162,7 +162,8 @@ const modelOptions = [
   'qwen3-coder-plus',
   'gpt-5-mini',
   'gpt-5',
-  'gemini-3-pro-preview'
+  'gemini-3-pro-preview',
+  'my-finetuned-model'
 ]
 
 const handleCompare = async () => {
