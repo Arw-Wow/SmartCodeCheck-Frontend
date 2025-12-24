@@ -23,6 +23,8 @@
           <option value="gpt-5-mini">gpt-5-mini</option>
           <option value="gpt-5">gpt-5</option>
           <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
+
+          <option value="my-finetuned-model">my-finetuned-model</option>
         </select>
       </div>
       

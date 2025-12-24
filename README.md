@@ -39,6 +39,7 @@ SmartCodeCheck-Frontend/
 1.  **安装依赖**:
 
     ```bash
+    npm install
     ```
 
 2.  **启动服务**:
