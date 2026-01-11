@@ -5,12 +5,15 @@
       <router-view />
     </div>
     <AppFooter />
+    
+    <ToastManager />
   </div>
 </template>
 
 <script setup>
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
+import ToastManager from '@/components/common/ToastManager.vue'
 </script>
 
 <style scoped>

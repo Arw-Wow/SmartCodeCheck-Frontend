@@ -1,11 +1,12 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import api from '@/api';
 
 export const useGlobalDataStore = defineStore(
   "initial-data",
   () => {
     const customDefinitions = ref({});
-    // 检测页状态
+    
     const detection = ref({
       language: "Python",
       code: 'def example():\n    print("Hello World")',
@@ -15,7 +16,6 @@ export const useGlobalDataStore = defineStore(
       results: null,
     });
 
-    // 对比页状态
     const comparison = ref({
       language: "Python",
       codeA: "",
@@ -26,21 +26,51 @@ export const useGlobalDataStore = defineStore(
       results: null,
     });
 
-    // 方法
-    // 1. 添加用户自定义维度
-    const addCustomDefinition = (newDefinition) => {
-      Object.assign(customDefinitions.value, newDefinition)
-    }
+    // --- Actions ---
 
-    // 2. 删除用户自定义维度
-    const deleteCustomDefinition = (keyName) => {
-      delete customDefinitions.value[keyName]
-    }
+    // 1. 从后端同步数据 (初始化时调用)
+    const fetchDefinitions = async () => {
+      try {
+        const res = await api.getDimensions();
+        // 将后端返回的数组 [{name, description}, ...] 转换为对象 {name: description, ...}
+        const map = {};
+        res.data.forEach(item => {
+          map[item.name] = item.description;
+        });
+        customDefinitions.value = map;
+      } catch (error) {
+        console.error("Failed to fetch dimensions", error);
+        // 如果未登录或失败，这里保持为空或不做处理
+      }
+    };
+
+    // 2. 添加维度 (API -> Local)
+    const addCustomDefinition = async (newDefinitionObj) => {
+      // newDefinitionObj 结构: { "维度名": "描述" }
+      const name = Object.keys(newDefinitionObj)[0];
+      const description = newDefinitionObj[name];
+
+      // 调接口
+      await api.createDimension({ name, description });
+      
+      // 接口成功后更新本地
+      Object.assign(customDefinitions.value, newDefinitionObj);
+    };
+
+    // 3. 删除维度 (API -> Local)
+    const deleteCustomDefinition = async (keyName) => {
+      // 调接口
+      await api.deleteDimension(keyName);
+      
+      // 接口成功后更新本地
+      delete customDefinitions.value[keyName];
+    };
 
     return {
       customDefinitions,
       detection,
       comparison,
+      fetchDefinitions,
       addCustomDefinition,
       deleteCustomDefinition
     };
@@ -49,7 +79,9 @@ export const useGlobalDataStore = defineStore(
     persist: {
       key: "initial-data-store",
       storage: localStorage,
-      paths: ["customDefinitions"],
+      // 不再持久化 customDefinitions，因为它现在归数据库管
+      // 我们可以只持久化 detection 和 comparison 的临时状态，防止刷新丢失
+      paths: ["detection", "comparison"], 
     },
   }
 );
