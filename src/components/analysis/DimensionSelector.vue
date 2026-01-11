@@ -107,35 +107,45 @@ const toggle = (id) => {
 }
 
 // 确认添加自定义维度
-const confirmAdd = () => {
+const confirmAdd = async () => {
   if (!newDimName.value.trim()) return
 
   const name = newDimName.value.trim()
   const desc = newDimDesc.value.trim()
+  
+  // TODO: 可以在这里加个 loading 状态
+  try {
+    // 1. 调用 Store 的异步 Action
+    const newDefs = { [name]: desc }
+    await store.addCustomDefinition(newDefs) // 等待后端返回
 
-  // 1. 更新定义对象
-  const newDefs = { [name]: desc }
-  store.addCustomDefinition(newDefs)
+    // 2. 自动选中
+    if (!props.modelValue.includes(name)) {
+      const newSelected = [...props.modelValue, name]
+      emit('update:modelValue', newSelected)
+    }
 
-  // 2. 自动选中新维度
-  if (!props.modelValue.includes(name)) {
-    const newSelected = [...props.modelValue, name]
-    emit('update:modelValue', newSelected)
+    // 3. 重置表单
+    cancelAdd()
+  } catch (error) {
+    alert("添加失败: " + (error.response?.data?.detail || error.message))
   }
-
-  // 3. 重置表单
-  cancelAdd()
 }
 
 // 删除自定义维度
-const removeCustom = (name) => {
-  // 1. 从定义中移除
-  store.deleteCustomDefinition(name)
+const removeCustom = async (name) => {
+  if(!confirm(`确认删除维度 "${name}" 吗？`)) return;
 
-  // 2. 如果已选中，从选中列表中移除
-  if (props.modelValue.includes(name)) {
-    const newSelected = props.modelValue.filter(id => id !== name)
-    emit('update:modelValue', newSelected)
+  try {
+    await store.deleteCustomDefinition(name) // 等待后端返回
+
+    // 更新选中状态
+    if (props.modelValue.includes(name)) {
+      const newSelected = props.modelValue.filter(id => id !== name)
+      emit('update:modelValue', newSelected)
+    }
+  } catch (error) {
+    alert("删除失败: " + error.message)
   }
 }
 
