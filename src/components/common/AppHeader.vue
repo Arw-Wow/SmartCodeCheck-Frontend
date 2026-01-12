@@ -2,12 +2,8 @@
   <header class="site-header glass-effect">
     <div class="container header-inner">
       <router-link to="/" class="logo-wrapper">
-        <div class="logo-icon-box">
-          <span class="logo-icon">⚡</span>
-        </div>
-        <span class="logo-text">SmartCodeCheck</span>
+        <img src="@/assets/logo.png" alt="SmartCodeCheck" class="logo-img" />
       </router-link>
-      
       <nav class="main-nav">
         <router-link to="/" active-class="active" class="nav-link">
           <span class="link-content">首页</span>
@@ -75,46 +71,35 @@ const handleLogout = () => {
 
 .header-inner {
   display: flex;
-  justify-content: space-between;
+  /*Dn justify-content: space-between;  <-- 移除这个，改用 flex: 1 控制 */
   align-items: center;
   height: 40px;
 }
 
-/* Logo */
+/* --- 1. 左侧 Logo 区域 --- */
 .logo-wrapper {
   display: flex;
   align-items: center;
-  gap: 10px;
   text-decoration: none;
-  group: hover;
+  flex: 1;      /* 关键：占据左侧剩余空间 */
+  min-width: 0; /* 防止极端情况下溢出 */
 }
 
-.logo-icon-box {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s;
+.logo-img {
+  height: 36px;
+  width: auto;
+  transition: transform 0.3s ease;
+  /* 如果 logo 实在太宽，可以加一个 max-width 限制，例如： */
+  /* max-width: 180px; */ 
+  /* object-fit: contain; */
 }
 
-.logo-wrapper:hover .logo-icon-box {
-  transform: rotate(15deg) scale(1.1);
-  border-color: var(--primary-color);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+.logo-wrapper:hover .logo-img {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
 }
 
-.logo-text {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
-}
-
-/* Navigation */
+/* --- 2. 中间导航 --- */
 .main-nav {
   display: flex;
   gap: 8px;
@@ -122,6 +107,9 @@ const handleLogout = () => {
   padding: 4px;
   border-radius: 99px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  /* 确保中间不被拉伸，保持自然宽度 */
+  flex-shrink: 0; 
+  /* 左右 margin 设为 auto 也是一种居中策略，但在 flex:1 布局下不需要 */
 }
 
 .nav-link {
@@ -133,6 +121,7 @@ const handleLogout = () => {
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
+  white-space: nowrap; /* 防止文字换行 */
 }
 
 .nav-link:hover {
@@ -146,11 +135,14 @@ const handleLogout = () => {
   box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
 }
 
-/* Buttons & User */
+/* --- 3. 右侧操作区 --- */
 .actions {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;                   /* 关键：占据右侧剩余空间 */
+  justify-content: flex-end; /* 关键：内容靠右对齐 */
+  min-width: 0;
 }
 
 .btn-ghost {
@@ -158,6 +150,7 @@ const handleLogout = () => {
   font-weight: 600;
   font-size: 0.9rem;
   transition: color 0.2s;
+  white-space: nowrap;
 }
 .btn-ghost:hover { color: var(--text-primary); }
 
@@ -171,6 +164,7 @@ const handleLogout = () => {
   transition: all 0.3s;
   position: relative;
   z-index: 1;
+  white-space: nowrap;
 }
 
 .btn-primary-glow:hover {
@@ -207,6 +201,7 @@ const handleLogout = () => {
   justify-content: center;
   font-weight: bold;
   color: white;
+  flex-shrink: 0;
 }
 
 .username {
@@ -234,6 +229,7 @@ const handleLogout = () => {
   color: var(--text-secondary);
   background: transparent;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-logout:hover {

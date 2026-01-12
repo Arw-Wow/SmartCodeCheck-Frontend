@@ -8,9 +8,12 @@
     <div class="register-container">
       <div class="glass-card">
         <div class="card-header">
-          <div class="logo-area">🚀</div>
-          <h2 class="title">创建账号</h2>
-          <p class="subtitle">加入 SmartCodeCheck，体验智能代码审计</p>
+          <div class="logo-area">
+            <img src="@/assets/logo.png" alt="Logo" class="auth-logo" />
+          </div>
+
+          <!-- <h2 class="title">创建账号</h2> -->
+          <p class="subtitle">创建账号，体验智能代码审计</p>
         </div>
         
         <form @submit.prevent="handleRegister" class="auth-form" novalidate>
@@ -213,8 +216,26 @@ const handleRegister = async () => {
 }
 
 .card-header { text-align: center; margin-bottom: 30px; }
-.logo-area { font-size: 3rem; margin-bottom: 10px; text-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
-.title { font-size: 1.8rem; font-weight: 700; color: #fff; margin: 0 0 8px 0; }
+
+.logo-area { 
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.auth-logo {
+  width: 300px;
+  height: auto;
+  filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
+  transition: all 0.3s ease;
+}
+
+.auth-logo:hover {
+  transform: scale(1.1) rotate(5deg);
+  filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.8));
+}
+
+/* .title { font-size: 1.8rem; font-weight: 700; color: #fff; margin: 0 0 8px 0; } */
 .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin: 0; }
 
 .form-group { margin-bottom: 20px; position: relative; }

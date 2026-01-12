@@ -9,9 +9,12 @@
     <div class="login-container">
       <div class="glass-card">
         <div class="card-header">
-          <div class="logo-area">⚡</div>
-          <h2 class="title">欢迎回来</h2>
-          <p class="subtitle">登录 SmartCodeCheck，开启代码审计之旅</p>
+          <div class="logo-area">
+            <img src="@/assets/logo.png" alt="Logo" class="auth-logo" />
+          </div>
+          
+          <!-- <h2 class="title">欢迎回来</h2> -->
+          <p class="subtitle">欢迎回来，开启代码审计之旅</p>
         </div>
         
         <form @submit.prevent="handleLogin" class="auth-form" novalidate>
@@ -76,7 +79,7 @@ import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const toast = useToastStore() // 修复了这里的声明错误
+const toast = useToastStore()
 
 const form = reactive({ username: '', password: '' })
 const errors = reactive({ username: '', password: '' })
@@ -171,8 +174,27 @@ const handleLogin = async () => {
 }
 
 .card-header { text-align: center; margin-bottom: 32px; }
-.logo-area { font-size: 3rem; margin-bottom: 10px; text-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-.title { font-size: 1.8rem; font-weight: 700; color: #fff; margin: 0 0 8px 0; }
+
+.logo-area { 
+  margin-bottom: 40px; /* 调整间距 */
+  display: flex;
+  justify-content: center;
+}
+
+.auth-logo {
+  width: 300px; 
+  height: auto;
+  /* 保留之前的发光质感，改用 filter */
+  filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5)); 
+  transition: all 0.3s ease;
+}
+
+.auth-logo:hover {
+  transform: scale(1.1) rotate(5deg);
+  filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.8));
+}
+
+/* .title { font-size: 1.8rem; font-weight: 700; color: #fff; margin: 0 0 8px 0; } */
 .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin: 0; }
 
 .form-group { margin-bottom: 24px; position: relative; }
