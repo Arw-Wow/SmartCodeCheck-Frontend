@@ -1,7 +1,3 @@
-{
-type: uploaded file
-fileName: arw-wow/smartcodecheck-frontend/SmartCodeCheck-Frontend-f6d694c11d44bf7ccc5adc25c0bbf4a895ccfa9d/src/components/common/AppHeader.vue
-fullContent:
 <template>
   <header class="site-header glass-effect">
     <div class="container header-inner">
@@ -245,4 +241,3 @@ const handleLogout = () => {
   color: #ff6b6b;
 }
 </style>
-}

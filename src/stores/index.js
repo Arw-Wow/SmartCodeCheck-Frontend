@@ -4,6 +4,14 @@ import api from '@/api';
 
 export const useGlobalDataStore = defineStore("initial-data", () => {
     // --- 定义初始状态常量 (用于 Reset) ---
+    
+    // 默认的本地配置模板
+    const defaultLocalConfig = {
+      base_url: "http://localhost:11434/v1", // 默认指向 Ollama
+      api_key: "EMPTY",
+      model_name: "llama3"
+    };
+
     const initialDetection = {
       language: "Python",
       code: 'def example():\n    print("Hello World")',
@@ -11,6 +19,7 @@ export const useGlobalDataStore = defineStore("initial-data", () => {
       selectedDimensions: ["correctness", "security"],
       generationInstruction: "",
       results: null,
+      localConfig: { ...defaultLocalConfig }
     };
 
     const initialComparison = {
@@ -21,6 +30,7 @@ export const useGlobalDataStore = defineStore("initial-data", () => {
       selectedDimensions: ["correctness", "efficiency"],
       generationInstruction: "",
       results: null,
+      localConfig: { ...defaultLocalConfig }
     };
 
     // --- State ---
@@ -88,8 +98,12 @@ export const useGlobalDataStore = defineStore("initial-data", () => {
 
     // 6. 恢复历史记录
     const restoreHistory = (record) => {
-      // 深度拷贝以断开引用
       const data = JSON.parse(JSON.stringify(record.data));
+      // 如果旧记录没有 localConfig，补一个默认值
+      if (!data.localConfig) {
+        data.localConfig = { ...defaultLocalConfig };
+      }
+      
       if (record.type === 'detection') {
         detection.value = data;
       } else if (record.type === 'comparison') {

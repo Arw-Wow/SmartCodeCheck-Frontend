@@ -1,7 +1,3 @@
-{
-type: uploaded file
-fileName: arw-wow/smartcodecheck-frontend/SmartCodeCheck-Frontend-f6d694c11d44bf7ccc5adc25c0bbf4a895ccfa9d/src/components/common/HistoryList.vue
-fullContent:
 <template>
   <div class="history-list">
     <div v-if="loading" class="state-box">
@@ -231,4 +227,3 @@ const getCodePreview = (item) => {
 .list-anim-enter-active, .list-anim-leave-active { transition: all 0.3s ease; }
 .list-anim-enter-from, .list-anim-leave-to { opacity: 0; transform: translateX(-10px); }
 </style>
-}
