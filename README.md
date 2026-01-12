@@ -125,6 +125,30 @@ npm run build
 
 ---
 
+## 🗺️ Roadmap（Planned Features）
+
+SmartCodeCheck 后续将进行以下更新：
+
+- **IDE 级交互体验**
+  - 行内问题高亮与注释（Inline Decorations）
+  - 一键应用修复建议（One-Click Fix）
+
+- **交互与可解释性增强**
+  - 检测报告的多轮追问与对话（Follow-up Chat）
+  - 流式分析输出（Streaming via SSE）
+
+- **研究与规模化评估支持**
+  - 批量代码评估模式（Batch Evaluation）
+  - 结果汇总与实验数据导出
+
+- **模型与知识增强**
+  - 审计角色 / 场景化提示词预设（Persona Presets）
+  - 自定义规范文档驱动的 RAG 检测（Custom Knowledge Base）
+
+👉 详细设计与阶段性计划请见 [`ROADMAP.md`](./ROADMAP.md)
+
+---
+
 ## 🤝 贡献与反馈
 
 欢迎提交 Issue 或 Pull Request。
