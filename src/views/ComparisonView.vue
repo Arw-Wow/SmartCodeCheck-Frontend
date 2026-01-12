@@ -167,6 +167,7 @@
                 </div>
 
                 <div class="metrics-dashboard">
+                  
                   <div class="pk-card">
                     <div class="score-col">
                       <span class="label">Code A</span>
@@ -177,6 +178,10 @@
                       <span class="label">Code B</span>
                       <span class="score-val color-b">{{ store.comparison.results.score_b }}</span>
                     </div>
+                  </div>
+
+                  <div class="radar-card">
+                    <ComparisonRadarChart :dimensionScores="store.comparison.results.dimension_scores" />
                   </div>
 
                   <div class="bars-card">
@@ -194,6 +199,7 @@
                       </div>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -223,6 +229,7 @@ import { downloadFile, generateComparisonMarkdown } from '@/utils/export'
 import CodeEditor from '@/components/analysis/CodeEditor.vue'
 import DimensionSelector from '@/components/analysis/DimensionSelector.vue'
 import HistoryList from '@/components/common/HistoryList.vue'
+import ComparisonRadarChart from '@/components/comparison/ComparisonRadarChart.vue'
 
 const store = useGlobalDataStore()
 const toast = useToastStore()
@@ -487,10 +494,63 @@ const exportMD = () => {
   line-height: 1.6; color: var(--text-primary);
 }
 
-.metrics-dashboard { display: grid; grid-template-columns: 280px 1fr; gap: 40px; }
+/* 仪表盘布局样式 */
+.metrics-dashboard { 
+  display: grid; 
+  /* 三列布局：左侧分数(固定200px) 中间雷达(1fr) 右侧条形图(1fr) */
+  grid-template-columns: 200px 1fr 1fr; 
+  gap: 20px; 
+  align-items: stretch; /* 让三个卡片高度一致 */
+}
+
+/* PK Card */
 .pk-card {
-  display: flex; justify-content: space-around; align-items: center;
-  background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color);
+  display: flex; 
+  flex-direction: column; /* 改为垂直排列以节省宽度 */
+  justify-content: center; 
+  align-items: center;
+  background: rgba(0,0,0,0.2); 
+  border-radius: 12px; 
+  padding: 20px; 
+  border: 1px solid var(--border-color);
+  gap: 20px;
+}
+
+/* Radar Card */
+.radar-card {
+  background: rgba(0,0,0,0.2); 
+  border-radius: 12px; 
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px; 
+  position: relative;
+  overflow: hidden;
+}
+
+/* Bars Card */
+.bars-card {
+  background: rgba(0,0,0,0.2); 
+  border-radius: 12px; 
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 响应式适配：屏幕较窄时，自动调整布局 */
+@media (max-width: 1200px) {
+  .metrics-dashboard {
+    grid-template-columns: 1fr 1fr; /* 变为两列 */
+  }
+  .pk-card { 
+    grid-column: span 2; /* 评分卡占满一行 */
+    flex-direction: row; 
+    justify-content: space-around; 
+  }
 }
 .score-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .score-val { font-size: 2.5rem; font-weight: 800; }
