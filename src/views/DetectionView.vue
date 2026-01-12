@@ -1,140 +1,183 @@
 <template>
-  <div class="container detection-layout">
-    <aside class="sidebar">
-      <h3>配置面板</h3>
+  <div class="detection-view">
+    <div class="ambient-bg">
+      <div class="glow-spot spot-1"></div>
+      <div class="glow-spot spot-2"></div>
+    </div>
+
+    <div class="workspace-container">
       
-      <div class="form-group">
-        <label>编程语言</label>
-        <select v-model="store.detection.language">
-          <option value="Auto">Auto</option>
-          <option value="Python">Python</option>
-          <option value="Java">Java</option>
-          <option value="C++">C++</option>
-          <option value="JavaScript">JavaScript</option>
-          <option value="Go">Go</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>模型选择</label>
-        <select v-model="store.detection.modelName">
-          <option value="deepseek-v3.1">deepseek-v3.1</option>
-          <option value="qwen3-coder-plus">qwen3-coder-plus</option>
-          <option value="gpt-5-mini">gpt-5-mini</option>
-          <option value="gpt-5">gpt-5</option>
-          <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
-          <option value="my-finetuned-model">my-finetuned-model</option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label>检测维度</label>
-        <DimensionSelector 
-          v-model="store.detection.selectedDimensions" 
-        />
-      </div>
-
-      <div class="action-area">
-        <button 
-          v-if="!isAnalyzing"
-          @click="handleAnalyze" 
-          class="btn btn-primary full-width"
-        >
-          开始检测
-        </button>
-        <button 
-          v-else
-          @click="handleStop" 
-          class="btn btn-danger full-width"
-        >
-          🛑 终止生成
-        </button>
-      </div>
-      
-      <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
-    </aside>
-
-    <main class="editor-section">
-      <details class="instruction-box">
-        <summary>📝 代码生成指令（可选，点击展开）</summary>
-        <textarea
-          v-model="store.detection.generationInstruction"
-          class="instruction-input"
-          rows="8"
-          placeholder="例如：请用Python实现一个二分查找函数，要求包含输入校验与时间复杂度说明。"
-        ></textarea>
-      </details>
-      <CodeEditor v-model="store.detection.code" :language="store.detection.language" />
-    </main>
-
-    <aside class="result-sidebar">
-      <div class="tabs-header">
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'result' }"
-          @click="activeTab = 'result'"
-        >
-          📊 分析结果
-        </button>
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'history' }"
-          @click="loadHistory"
-        >
-          🕒 历史记录
-        </button>
-      </div>
-
-      <div v-show="activeTab === 'result'" class="tab-content">
-        <div class="sidebar-header">
-          <h3>检测报告</h3>
-          <div v-if="store.detection.results" class="export-tools">
-            <button @click="exportJSON" class="btn-icon" title="导出 JSON">JSON</button>
-            <button @click="exportMD" class="btn-icon" title="导出 Markdown">Markdown</button>
-          </div>
+      <aside class="panel-left glass-panel">
+        <div class="panel-header">
+          <h3>🛠️ 检测配置</h3>
         </div>
         
-        <div v-if="!store.detection.results && !isAnalyzing" class="empty-state">
-          请配置并点击开始检测。
-        </div>
+        <div class="scroll-content">
+          <div class="config-item">
+            <label class="config-label">编程语言</label>
+            <div class="custom-select-wrapper">
+              <select v-model="store.detection.language">
+                <option value="Auto">自动检测</option>
+                <option value="Python">Python</option>
+                <option value="Java">Java</option>
+                <option value="C++">C++</option>
+                <option value="JavaScript">JavaScript</option>
+                <option value="Go">Go</option>
+              </select>
+            </div>
+          </div>
 
-        <div v-if="isAnalyzing" class="loading-state">
-          <div class="spinner"></div>
-          <p>模型正在深度分析代码...</p>
-          <small class="tip">包含自定义维度的分析可能需要更多时间</small>
-        </div>
-
-        <div v-if="store.detection.results" class="results-content">
-          <div class="score-card">
-            <span class="score-label">综合得分</span>
-            <span class="score-val" :class="getScoreClass(store.detection.results.score)">
-              {{ store.detection.results.score }}
-            </span>
+          <div class="config-item">
+            <label class="config-label">模型引擎</label>
+            <div class="custom-select-wrapper">
+              <select v-model="store.detection.modelName">
+                <option value="deepseek-v3.1">DeepSeek V3.1</option>
+                <option value="qwen3-coder-plus">Qwen3 Coder+</option>
+                <option value="gpt-5-mini">GPT-5 Mini</option>
+                <option value="gpt-5">GPT-5</option>
+                <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
+                <option value="my-finetuned-model">官方微调模型</option>
+              </select>
+            </div>
           </div>
           
-          <div class="issue-list">
-            <div v-for="(issue, index) in store.detection.results.issues" :key="index" class="issue-item">
-              <div class="issue-header">
-                <span class="badge" :class="issue.type">{{ issue.type }}</span>
-                <span class="dim-tag">{{ issue.dimension }}</span>
-                <span v-if="issue.line" class="line-tag">Line {{ issue.line }}</span>
-              </div>
-              <p class="issue-desc">{{ issue.description }}</p>
-              <div class="issue-suggestion">💡 建议: {{ issue.suggestion }}</div>
+          <div class="config-item">
+            <label class="config-label">检测维度</label>
+            <div class="dim-selector-wrapper">
+              <DimensionSelector v-model="store.detection.selectedDimensions" />
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-show="activeTab === 'history'" class="tab-content">
-        <HistoryList 
-          :records="store.historyList" 
-          :loading="historyLoading"
-          @restore="handleRestore"
-          @delete="handleDeleteHistory"
-        />
-      </div>
-    </aside>
+        <div class="panel-footer">
+          <button 
+            v-if="!isAnalyzing"
+            @click="handleAnalyze" 
+            class="btn-action primary"
+          >
+            <span class="icon">🚀</span>深度分析
+          </button>
+          <button 
+            v-else
+            @click="handleStop" 
+            class="btn-action danger pulsate"
+          >
+            <span class="icon">🛑</span> 终止生成
+          </button>
+          <p v-if="errorMessage" class="error-tip">{{ errorMessage }}</p>
+        </div>
+      </aside>
+
+      <main class="panel-center">
+        <div class="instruction-wrapper">
+          <details class="instruction-accordion">
+            <summary>
+              <span class="summary-icon">📝</span> 
+              <span>附加生成指令 / Context</span>
+              <span class="sub-text">(可选)</span>
+            </summary>
+            <div class="accordion-content">
+              <textarea
+                v-model="store.detection.generationInstruction"
+                placeholder="在此输入额外的上下文信息或具体指令，例如：'请生成一段 Hello world 的 python 代码。'"
+              ></textarea>
+            </div>
+          </details>
+        </div>
+
+        <div class="editor-frame">
+          <CodeEditor 
+            v-model="store.detection.code" 
+            :language="store.detection.language" 
+          />
+        </div>
+      </main>
+
+      <aside class="panel-right glass-panel">
+        <div class="tabs-nav">
+          <button 
+            :class="['tab-item', { active: activeTab === 'result' }]"
+            @click="activeTab = 'result'"
+          >
+            📊 分析报告
+          </button>
+          <button 
+            :class="['tab-item', { active: activeTab === 'history' }]"
+            @click="loadHistory"
+          >
+            🕒 历史记录
+          </button>
+        </div>
+
+        <div class="scroll-content result-content">
+          <transition name="fade-fast" mode="out-in">
+            <div v-if="activeTab === 'result'" key="result">
+              
+              <div v-if="store.detection.results" class="result-toolbar">
+                <span class="toolbar-title">检测完成</span>
+                <div class="btn-group">
+                  <button @click="exportJSON" title="导出 JSON">JSON</button>
+                  <button @click="exportMD" title="导出 Markdown">MD</button>
+                </div>
+              </div>
+
+              <div v-if="!store.detection.results && !isAnalyzing" class="empty-placeholder">
+                <div class="empty-icon">👋</div>
+                <p>配置参数并点击左侧<br>“深度分析”按钮</p>
+              </div>
+
+              <div v-if="isAnalyzing" class="loading-placeholder">
+                <div class="loader-ring"></div>
+                <p>AI 正在逐行扫描代码...</p>
+                <span class="loading-sub">各维度深度分析中...</span>
+              </div>
+
+              <div v-if="store.detection.results" class="report-body">
+                <div class="score-card-modern" :class="getScoreColorClass(store.detection.results.score)">
+                  <div class="score-ring">
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                      <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path class="circle" :stroke-dasharray="store.detection.results.score + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="score-number">{{ store.detection.results.score }}</div>
+                  </div>
+                  <div class="score-label">综合评分</div>
+                </div>
+                
+                <div class="issue-timeline">
+                  <div 
+                    v-for="(issue, index) in store.detection.results.issues" 
+                    :key="index" 
+                    class="issue-card"
+                    :class="issue.type.toLowerCase()"
+                  >
+                    <div class="issue-top">
+                      <span class="badge">{{ issue.type }}</span>
+                      <span class="dim-name">{{ issue.dimension }}</span>
+                      <span v-if="issue.line" class="line-num">Ln {{ issue.line }}</span>
+                    </div>
+                    <div class="issue-desc">{{ issue.description }}</div>
+                    <div class="issue-suggest">
+                      <span class="icon">💡</span> {{ issue.suggestion }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else key="history" class="history-wrapper">
+              <HistoryList 
+                :records="store.historyList" 
+                :loading="historyLoading"
+                @restore="handleRestore"
+                @delete="handleDeleteHistory"
+              />
+            </div>
+          </transition>
+        </div>
+      </aside>
+
+    </div>
   </div>
 </template>
 
@@ -148,29 +191,24 @@ import CodeEditor from '@/components/analysis/CodeEditor.vue'
 import HistoryList from '@/components/common/HistoryList.vue'
 import { downloadFile, generateDetectionMarkdown } from '@/utils/export'
 
-// 创建store实例
 const store = useGlobalDataStore()
 const toast = useToastStore()
 
 const isAnalyzing = ref(false)
 const errorMessage = ref('')
-const activeTab = ref('result') // 控制 Tab 切换
-const historyLoading = ref(false) // 历史记录加载状态
+const activeTab = ref('result')
+const historyLoading = ref(false)
 let abortController = null 
 
 const handleAnalyze = async () => {
-  // 基础校验
-  if (!store.detection.code.trim()) return alert('请输入代码')
-  if (store.detection.selectedDimensions.length === 0) return alert('请至少选择一个维度')
+  if (!store.detection.code.trim()) return toast.warning('请输入需要检测的代码')
+  if (store.detection.selectedDimensions.length === 0) return toast.warning('请至少选择一个检测维度')
 
   isAnalyzing.value = true
   store.detection.results = null
   errorMessage.value = ''
-  
-  // 切换回结果 Tab
   activeTab.value = 'result'
   
-  // 初始化 AbortController
   abortController = new AbortController()
 
   try {
@@ -183,22 +221,20 @@ const handleAnalyze = async () => {
       generation_instruction: store.detection.generationInstruction?.trim() || undefined
     }
 
-    // 调用 API
     const response = await api.analyzeCode(payload, abortController.signal)
-    
     store.detection.results = response.data
 
-    // 成功后自动保存到历史记录 (异步执行，不阻塞 UI)
     store.saveToHistory('detection').then(() => {
-      toast.success('结果已保存至历史记录', 1000)
-    }).catch(err => console.error('自动保存历史失败', err))
+      toast.success('分析完成，已自动保存')
+    }).catch(err => console.error(err))
     
   } catch (error) {
     if (error.name === 'CanceledError' || error.message === 'canceled') {
-      errorMessage.value = '检测已手动终止。'
+      errorMessage.value = '已终止'
     } else {
       console.error(error)
-      errorMessage.value = '分析失败: ' + error.message
+      errorMessage.value = '分析失败: ' + (error.response?.data?.detail || error.message)
+      toast.error('分析请求失败')
     }
   } finally {
     isAnalyzing.value = false
@@ -206,14 +242,10 @@ const handleAnalyze = async () => {
   }
 }
 
-// 终止操作
 const handleStop = () => {
-  if (abortController) {
-    abortController.abort()
-  }
+  if (abortController) abortController.abort()
 }
 
-// 历史记录相关逻辑
 const loadHistory = async () => {
   activeTab.value = 'history'
   historyLoading.value = true
@@ -225,136 +257,320 @@ const handleRestore = (record) => {
   if (confirm('恢复历史记录将覆盖当前编辑器内容，确定吗？')) {
     store.restoreHistory(record)
     activeTab.value = 'result'
-    toast.success('已恢复历史记录')
+    toast.success('历史记录已恢复')
   }
 }
 
 const handleDeleteHistory = async (id) => {
-  if (confirm('确定删除这条记录吗？')) {
-    await store.removeHistory(id, 'detection')
-    toast.success('删除成功')
-  }
+  await store.removeHistory(id, 'detection')
+  toast.success('删除成功')
 }
 
-// 导出功能
 const exportJSON = () => {
   const data = JSON.stringify(store.detection.results, null, 2)
-  downloadFile(data, `analysis_report_${Date.now()}.json`, 'application/json')
+  downloadFile(data, `audit_report_${Date.now()}.json`, 'application/json')
 }
 
 const exportMD = () => {
   const md = generateDetectionMarkdown(store.detection.results, store.detection.language)
-  downloadFile(md, `analysis_report_${Date.now()}.md`, 'text/markdown')
+  downloadFile(md, `audit_report_${Date.now()}.md`, 'text/markdown')
 }
 
-const getScoreClass = (score) => {
-  if (score >= 90) return 'text-success'
-  if (score >= 70) return 'text-warning'
-  return 'text-danger'
+const getScoreColorClass = (score) => {
+  if (score >= 90) return 'score-high'
+  if (score >= 70) return 'score-mid'
+  return 'score-low'
 }
 </script>
 
 <style scoped>
-/* 布局样式 */
-.container {
-  width: 100%;
-  max-width: 1300px;
-  padding: 0 20px;
+/* --- 布局容器 --- */
+.detection-view {
+  position: relative;
+  height: calc(100vh - 64px); /* 减去 Header 高度 */
+  overflow: hidden;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.workspace-container {
+  display: grid;
+  grid-template-columns: 280px 1fr 340px;
+  gap: 16px;
+  height: 100%;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
-.detection-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr 320px;
-  gap: 20px;
-  height: calc(100vh - 100px);
+/* --- 背景光效 --- */
+.ambient-bg {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
 }
-.sidebar, .result-sidebar { background: var(--panel-color); padding: 20px; border-radius: 8px; overflow-y: auto; display: flex; flex-direction: column; }
-.form-group { margin-bottom: 20px; }
-select { width: 100%; padding: 8px; background: var(--bg-color); color: #fff; border: 1px solid var(--border-color); border-radius: 4px; }
-.full-width { width: 100%; margin-top: 20px; }
+.glow-spot {
+  position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.15;
+}
+.spot-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--primary-color); }
+.spot-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: var(--accent-color); }
 
-/* 按钮样式 */
-.btn-danger { background: var(--danger); color: white; transition: all 0.2s; }
-.btn-danger:hover { background: #b91c1c; }
-
-/* Tabs 样式 */
-.tabs-header {
+/* --- 通用面板样式 --- */
+.glass-panel {
+  background: rgba(22, 27, 34, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   display: flex;
-  background: var(--bg-color);
-  border-bottom: 1px solid var(--border-color);
-  margin: -20px -20px 20px -20px; /* 抵消 result-sidebar 的 padding */
-  padding: 0 10px;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
-.tab-btn {
+
+.panel-header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.panel-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+
+.scroll-content {
   flex: 1;
-  background: transparent;
-  color: var(--text-secondary);
-  padding: 12px 0;
-  font-size: 0.95rem;
-  font-weight: 500;
-  border-bottom: 2px solid transparent;
+  overflow-y: auto;
+  padding: 16px;
+}
+.scroll-content::-webkit-scrollbar { width: 6px; }
+.scroll-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.scroll-content::-webkit-scrollbar-track { background: transparent; }
+
+/* --- 左侧面板：配置 --- */
+.config-item { margin-bottom: 24px; }
+.config-label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+
+.custom-select-wrapper {
+  position: relative;
+}
+.custom-select-wrapper select {
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  appearance: none;
+  font-size: 0.9rem;
   transition: all 0.2s;
 }
-.tab-btn:hover { color: var(--text-primary); }
-.tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-.tab-content { flex: 1; display: flex; flex-direction: column; }
-
-/* 打印样式 */
-@media print {
-  body * { visibility: hidden; }
-  #print-area, #print-area * { visibility: visible; }
-  #print-area { position: absolute; left: 0; top: 0; width: 100%; color: black; }
-  .issue-item { break-inside: avoid; border: 1px solid #ccc; color: black; }
-  .badge { border: 1px solid #000; }
+.custom-select-wrapper select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  background: rgba(0,0,0,0.5);
+}
+/* 自定义箭头 */
+.custom-select-wrapper::after {
+  content: "▼";
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
-/* 导出工具栏样式 */
-.sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.export-tools { display: flex; gap: 5px; }
-.btn-icon { background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; transition: all 0.2s; }
-.btn-icon:hover { color: var(--primary-color); border-color: var(--primary-color); }
-
-/* 结果样式 */
-.score-card { text-align: center; margin-bottom: 20px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; }
-.score-val { display: block; font-size: 2.5rem; font-weight: bold; }
-.text-success { color: var(--success); }
-.text-warning { color: #F59E0B; }
-.text-danger { color: var(--danger); }
-
-.issue-item { background: var(--bg-color); padding: 15px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid var(--text-secondary); }
-.badge { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; margin-right: 8px; }
-.badge.Warning { background: #F59E0B; color: #000; }
-.badge.Error { background: var(--danger); color: #fff; }
-.badge.Info { background: var(--primary-color); color: #fff; }
-.dim-tag, .line-tag { font-size: 0.75rem; color: var(--text-secondary); margin-right: 8px; }
-.issue-suggestion { margin-top: 8px; font-size: 0.85rem; color: var(--success); border-top: 1px dashed var(--border-color); padding-top: 5px;}
-
-.error-msg { color: var(--danger); margin-top: 10px; font-size: 0.9rem; text-align: center; }
-.loading-state { text-align: center; padding: 40px 0; color: var(--text-secondary); }
-.tip { display: block; margin-top: 10px; font-size: 0.8rem; opacity: 0.7; }
-.spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid var(--primary-color); width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 15px;}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-/* 指令编辑框样式 */
-.instruction-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; padding: 8px 12px; }
-.instruction-input { 
-  width: 100%; 
-  box-sizing: border-box; /* 防止宽度溢出 */
-  background: var(--bg-color); 
-  color: var(--text-primary); 
-  border: 1px solid var(--border-color); 
-  border-radius: 6px; 
-  padding: 8px; 
-  font-family: inherit; /* 保持字体一致 */
-  resize: vertical; /* 允许用户垂直拉伸，禁止水平拉伸破坏布局 */
+.panel-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0,0,0,0.2);
 }
 
-/* CodeEditor 高度调整 */
-.editor-section {
+.btn-action {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+.btn-action.primary { background: var(--primary-color); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+.btn-action.primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-action.danger { background: rgba(218, 54, 51, 0.15); color: #ff6b6b; border: 1px solid rgba(218, 54, 51, 0.3); }
+.btn-action.danger:hover { background: rgba(218, 54, 51, 0.25); }
+
+.pulsate { animation: pulse-red 2s infinite; }
+@keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); } }
+
+.error-tip { color: #ff6b6b; font-size: 0.8rem; text-align: center; margin-top: 8px; }
+
+/* --- 中间：编辑器 --- */
+.panel-center {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto;
+  min-width: 0; /* 防止 Flex 子项溢出 */
 }
+
+.instruction-wrapper summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  background: rgba(22, 27, 34, 0.6);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.instruction-wrapper summary:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
+.summary-icon { opacity: 0.7; }
+.sub-text { font-size: 0.75rem; opacity: 0.5; margin-left: auto; }
+
+.accordion-content { margin-top: 6px; }
+.accordion-content textarea {
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 10px;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+.accordion-content textarea:focus { border-color: var(--primary-color); outline: none; background: rgba(0,0,0,0.5); }
+
+.editor-frame {
+  flex: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- 右侧：结果 --- */
+.tabs-nav {
+  display: flex;
+  background: rgba(0,0,0,0.2);
+  padding: 4px;
+}
+.tab-item {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.tab-item:hover { color: var(--text-primary); }
+.tab-item.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: rgba(255,255,255,0.02); }
+
+.empty-placeholder, .loading-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+.loading-placeholder p { margin: 16px 0 4px; font-weight: 500; color: var(--text-primary); }
+.loading-sub { font-size: 0.8rem; opacity: 0.6; }
+
+.loader-ring {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 结果工具栏 */
+.result-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--border-color);
+}
+.toolbar-title { font-size: 0.85rem; font-weight: bold; color: var(--success); display: flex; align-items: center; gap: 4px; }
+.toolbar-title::before { content: "●"; font-size: 0.6rem; }
+.btn-group button {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-left: 6px;
+  transition: all 0.2s;
+}
+.btn-group button:hover { background: rgba(59, 130, 246, 0.1); color: var(--primary-color); border-color: var(--primary-color); }
+
+/* 综合评分环形图 */
+.score-card-modern {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+}
+.score-ring { position: relative; width: 100px; height: 100px; }
+.circular-chart { display: block; margin: 0 auto; max-width: 100%; max-height: 100%; }
+.circle-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 2.5; }
+.circle { fill: none; stroke-width: 2.5; stroke-linecap: round; animation: progress 1s ease-out forwards; }
+.score-number {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 2rem; font-weight: 800; color: #fff;
+}
+.score-label { margin-top: 10px; font-size: 0.9rem; opacity: 0.7; }
+
+/* 评分颜色 */
+.score-high .circle { stroke: var(--success); } .score-high .score-number { color: var(--success); }
+.score-mid .circle { stroke: #F59E0B; } .score-mid .score-number { color: #F59E0B; }
+.score-low .circle { stroke: var(--danger); } .score-low .score-number { color: var(--danger); }
+
+/* 问题列表卡片 */
+.issue-timeline { display: flex; flex-direction: column; gap: 12px; }
+.issue-card {
+  background: rgba(0,0,0,0.2);
+  border-left: 3px solid transparent;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.issue-card.error { border-left-color: var(--danger); background: linear-gradient(90deg, rgba(218,54,51,0.05) 0%, transparent 100%); }
+.issue-card.warning { border-left-color: #F59E0B; background: linear-gradient(90deg, rgba(245,158,11,0.05) 0%, transparent 100%); }
+.issue-card.info { border-left-color: var(--primary-color); }
+
+.issue-top { display: flex; align-items: center; margin-bottom: 6px; font-size: 0.8rem; }
+.badge { padding: 1px 5px; border-radius: 3px; font-weight: bold; margin-right: 8px; text-transform: uppercase; font-size: 0.7rem; }
+.error .badge { background: var(--danger); color: white; }
+.warning .badge { background: #F59E0B; color: black; }
+.info .badge { background: var(--primary-color); color: white; }
+
+.dim-name { color: var(--text-secondary); margin-right: auto; }
+.line-num { font-family: monospace; background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; }
+
+.issue-desc { line-height: 1.5; margin-bottom: 8px; color: #eee; }
+.issue-suggest { font-size: 0.85rem; color: #8B949E; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 4px; display: flex; gap: 6px; }
+
+/* 动画 */
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes progress { 0% { stroke-dasharray: 0 100; } }
+.fade-fast-enter-active, .fade-fast-leave-active { transition: opacity 0.2s; }
+.fade-fast-enter-from, .fade-fast-leave-to { opacity: 0; }
 </style>
