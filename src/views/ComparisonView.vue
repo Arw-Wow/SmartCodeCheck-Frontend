@@ -71,6 +71,19 @@
                     {{ m.label }}
                   </button>
                 </div>
+                <transition name="fade">
+                  <div v-if="store.comparison.modelName === 'custom-local'" class="local-config-mini">
+                    <div class="mini-row">
+                      <input v-model="store.comparison.localConfig.base_url" placeholder="API Base URL (e.g. http://localhost:11434/v1)" />
+                    </div>
+                    <div class="mini-row">
+                     <input v-model="store.comparison.localConfig.model_name" placeholder="Model Name (e.g. llama3)" />
+                    </div>
+                    <div class="mini-row">
+                      <input v-model="store.comparison.localConfig.api_key" type="password" placeholder="API Key (Optional)" />
+                    </div>
+                  </div>
+                </transition>
               </div>
             </div>
 
@@ -248,7 +261,8 @@ const modelOptions = [
   { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
   { value: 'gpt-5', label: 'GPT-5' },
   { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
-  { value: 'my-finetuned-model', label: '官方微调模型' }
+  { value: 'my-finetuned-model', label: '官方微调模型' },
+  { value: 'custom-local', label: '自定义本地' }
 ]
 
 const handleCompare = async () => {
@@ -270,10 +284,12 @@ const handleCompare = async () => {
       code_a: store.comparison.codeA,
       code_b: store.comparison.codeB,
       language: store.comparison.language,
-      model_name: store.comparison.modelName,
       dimensions: store.comparison.selectedDimensions,
       custom_definitions: store.customDefinitions,
-      generation_instruction: store.comparison.generationInstruction?.trim() || undefined
+      generation_instruction: store.comparison.generationInstruction?.trim() || undefined,
+      // 动态判断
+      model_name: store.comparison.modelName === 'custom-local' ? undefined : store.comparison.modelName,
+      local_config: store.comparison.modelName === 'custom-local' ? store.comparison.localConfig : undefined
     }
 
     const res = await api.compareCodes(payload, abortController.signal)
@@ -397,9 +413,9 @@ const exportMD = () => {
 .btn-action.danger { background: rgba(218,54,51,0.2); color: #ff6b6b; border: 1px solid rgba(218,54,51,0.3); }
 .pulsate { animation: pulse 2s infinite; }
 
-/* --- Config Panel (核心修改区域) --- */
+/* --- Config Panel --- */
 .config-panel {
-  overflow: hidden; /* 关键：配合高度动画 */
+  overflow: hidden; /* 配合高度动画 */
 }
 
 .config-grid {
@@ -422,8 +438,14 @@ const exportMD = () => {
 
 .model-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .model-chip {
-  background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);
-  padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; transition: all 0.2s;
+  background: transparent; 
+  border: 1px solid var(--border-color); 
+  color: var(--text-secondary);
+  padding: 8px 8px; /* 增大内边距 */
+  border-radius: 6px; /* 圆角稍微大一点 */
+  cursor: pointer; 
+  font-size: 0.75rem; /* 增大字体 */
+  transition: all 0.2s;
 }
 .model-chip:hover { border-color: var(--primary-color); color: var(--text-primary); }
 .model-chip.active { background: rgba(59,130,246,0.1); border-color: var(--primary-color); color: var(--primary-color); }
@@ -571,4 +593,20 @@ const exportMD = () => {
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.local-config-mini {
+  width: 100%;
+  margin-top: 8px;
+  background: rgba(0,0,0,0.3);
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px dashed var(--border-color);
+}
+.mini-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.mini-row:last-child { margin-bottom: 0; }
+.mini-row input {
+  flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);
+  color: white; padding: 4px 6px; border-radius: 4px; font-size: 0.75rem;
+}
+.mini-row input:focus { border-color: var(--primary-color); outline: none; }
 </style>

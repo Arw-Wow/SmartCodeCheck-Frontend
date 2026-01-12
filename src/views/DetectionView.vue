@@ -36,10 +36,38 @@
                 <option value="gpt-5-mini">GPT-5 Mini</option>
                 <option value="gpt-5">GPT-5</option>
                 <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
-                <option value="my-finetuned-model">my-finetuned-model</option>
+                <option value="my-finetuned-model">官方微调模型</option>
+                <option value="custom-local">自定义本地模型 (Ollama/vLLM)</option>
               </select>
             </div>
           </div>
+          
+          <transition name="fade-fast">
+            <div v-if="store.detection.modelName === 'custom-local'" class="local-config-box">
+              <div class="sub-form-item">
+                <label>API Base URL</label>
+                <input 
+                  v-model="store.detection.localConfig.base_url" 
+                  placeholder="http://localhost:11434/v1"
+                />
+              </div>
+              <div class="sub-form-item">
+                <label>Model Name</label>
+                <input 
+                  v-model="store.detection.localConfig.model_name" 
+                  placeholder="e.g. llama3, qwen2.5"
+                />
+              </div>
+              <div class="sub-form-item">
+                <label>API Key (Optional)</label>
+                <input 
+                  v-model="store.detection.localConfig.api_key" 
+                  type="password"
+                  placeholder="默认 EMPTY"
+                />
+              </div>
+            </div>
+          </transition>
           
           <div class="config-item">
             <label class="config-label">检测维度</label>
@@ -69,7 +97,7 @@
       </aside>
 
       <main class="panel-center">
-        <div class="instruction-wrapper">
+         <div class="instruction-wrapper">
           <details class="instruction-accordion">
             <summary>
               <span class="summary-icon">📝</span> 
@@ -94,7 +122,7 @@
       </main>
 
       <aside class="panel-right glass-panel">
-        <div class="tabs-nav">
+         <div class="tabs-nav">
           <button 
             :class="['tab-item', { active: activeTab === 'result' }]"
             @click="activeTab = 'result'"
@@ -176,7 +204,6 @@
           </transition>
         </div>
       </aside>
-
     </div>
   </div>
 </template>
@@ -212,13 +239,16 @@ const handleAnalyze = async () => {
   abortController = new AbortController()
 
   try {
+    // 构造请求 Payload
     const payload = {
       code_content: store.detection.code,
       language: store.detection.language,
-      model_name: store.detection.modelName,
       dimensions: store.detection.selectedDimensions,
       custom_definitions: store.customDefinitions,
-      generation_instruction: store.detection.generationInstruction?.trim() || undefined
+      generation_instruction: store.detection.generationInstruction?.trim() || undefined,
+      // 动态判断是否使用本地配置
+      model_name: store.detection.modelName === 'custom-local' ? undefined : store.detection.modelName,
+      local_config: store.detection.modelName === 'custom-local' ? store.detection.localConfig : undefined
     }
 
     const response = await api.analyzeCode(payload, abortController.signal)
@@ -284,7 +314,6 @@ const getScoreColorClass = (score) => {
 </script>
 
 <style scoped>
-/* --- 布局容器 --- */
 .detection-view {
   position: relative;
   height: calc(100vh - 64px); /* 减去 Header 高度 */
@@ -573,4 +602,22 @@ const getScoreColorClass = (score) => {
 @keyframes progress { 0% { stroke-dasharray: 0 100; } }
 .fade-fast-enter-active, .fade-fast-leave-active { transition: opacity 0.2s; }
 .fade-fast-enter-from, .fade-fast-leave-to { opacity: 0; }
+
+/* 本地配置输入框样式 */
+.local-config-box {
+  background: rgba(0,0,0,0.2);
+  border: 1px dashed var(--border-color);
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: -16px; /* 紧贴上一项 */
+  margin-bottom: 24px;
+}
+.sub-form-item { margin-bottom: 10px; }
+.sub-form-item label { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; }
+.sub-form-item input {
+  width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);
+  color: white; padding: 6px 8px; border-radius: 4px; font-size: 0.85rem;
+  box-sizing: border-box;
+}
+.sub-form-item input:focus { border-color: var(--primary-color); outline: none; }
 </style>
