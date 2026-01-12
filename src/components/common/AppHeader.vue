@@ -81,17 +81,15 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   text-decoration: none;
-  flex: 1;      /* 关键：占据左侧剩余空间 */
+  flex: 1;      /* 占据左侧剩余空间 */
   min-width: 0; /* 防止极端情况下溢出 */
+  margin-left: -10px;
 }
 
 .logo-img {
-  height: 36px;
+  height: 26px;
   width: auto;
   transition: transform 0.3s ease;
-  /* 如果 logo 实在太宽，可以加一个 max-width 限制，例如： */
-  /* max-width: 180px; */ 
-  /* object-fit: contain; */
 }
 
 .logo-wrapper:hover .logo-img {
@@ -140,8 +138,8 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex: 1;                   /* 关键：占据右侧剩余空间 */
-  justify-content: flex-end; /* 关键：内容靠右对齐 */
+  flex: 1;                   /* 占据右侧剩余空间 */
+  justify-content: flex-end; /* 内容靠右对齐 */
   min-width: 0;
 }
 
