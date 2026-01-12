@@ -1,31 +1,36 @@
 <template>
   <div class="code-editor-wrapper">
     <div class="editor-header">
-      <div class="tabs">
+      <div class="window-controls">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+      </div>
+      
+      <div class="tabs-container">
         <button 
-          class="tab-btn" 
+          class="editor-tab" 
           :class="{ active: mode === 'paste' }"
           @click="mode = 'paste'"
         >
-          ✏️ 编辑模式
+          <span class="tab-icon">📝</span> 编辑器
         </button>
         <button 
-          class="tab-btn" 
+          class="editor-tab" 
           :class="{ active: mode === 'upload' }"
           @click="mode = 'upload'"
         >
-          📂 文件上传
+          <span class="tab-icon">📂</span> 文件上传
         </button>
       </div>
       
-      <div class="header-info">
-        <span class="lang-tag">{{ language }}</span>
+      <div class="lang-indicator">
+        {{ language }}
       </div>
     </div>
 
     <div class="editor-body-area">
-      
-      <div v-if="mode === 'paste'" class="cm-layout-fixer">
+      <div v-show="mode === 'paste'" class="cm-layout-fixer">
         <codemirror
           v-model="code"
           placeholder="// 在此处粘贴代码，或使用上传功能..."
@@ -38,19 +43,18 @@
         />
       </div>
 
-      <div v-else class="upload-area" @dragover.prevent @drop.prevent="handleDrop">
-        <div class="upload-box">
-          <div class="icon">☁️</div>
-          <p>将文件拖拽至此，或</p>
-          <label class="upload-btn">
-            点击选择文件
+      <div v-show="mode === 'upload'" class="upload-area" @dragover.prevent @drop.prevent="handleDrop">
+        <div class="upload-box-modern">
+          <div class="upload-icon-anim">☁️</div>
+          <h4 class="upload-title">拖拽文件到这里</h4>
+          <p class="upload-subtitle">支持 .py, .java, .cpp, .js 等源码文件</p>
+          
+          <label class="btn-select-file">
+            选择文件
             <input type="file" ref="fileInput" @change="handleFileSelect" accept=".py,.java,.cpp,.js,.ts,.go,.c,.h" />
           </label>
-          <p class="limit-tip">支持 .py, .java, .cpp 等常见格式 (Max 1MB)</p>
-          <p class="limit-tip">上传后将自动读取内容至编辑器</p>
         </div>
       </div>
-
     </div>
   </div>
 </template>
@@ -130,110 +134,130 @@ const handleDrop = (event) => {
 </script>
 
 <style scoped>
-/* 1. 最外层包装器 */
+/* 容器 */
 .code-editor-wrapper {
-  background: #000000;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  background: #0d0d0d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  height: 100%;       /* 必须设置高度 */
-  overflow: hidden;   /* 隐藏超出圆角的部分 */
+  height: 100%;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-/* 2. 顶部 Header (固定高度) */
+/* 头部 */
 .editor-header {
-  flex: 0 0 40px;     /* 固定 40px 高度，不伸缩 */
-  background: var(--panel-color);
-  border-bottom: 1px solid var(--border-color);
+  flex: 0 0 36px;
+  background: #1e1e1e; /* VS Code 风格深色头 */
+  border-bottom: 1px solid #2b2b2b;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 0 10px;
+  gap: 16px;
 }
 
-/* 3. 主体区域容器 (占据剩余空间) */
-.editor-body-area {
-  flex: 1;            /* 占据 Header 之外的所有空间 */
-  position: relative; /* 作为绝对定位子元素的锚点 */
-  min-height: 0;      /* 关键：允许 flex 子项收缩，防止被内容撑大 */
-  width: 100%;
+/* 窗口控制点 (装饰用) */
+.window-controls {
+  display: flex; gap: 6px; margin-right: 4px;
 }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.red { background: #ff5f56; }
+.yellow { background: #ffbd2e; }
+.green { background: #27c93f; }
 
-/* 4. CodeMirror 的绝对定位修正层 */
-.cm-layout-fixer {
-  position: absolute;
-  top: 0; bottom: 0; left: 0; right: 0;
-  height: 100%;
+/* 标签页 */
+.tabs-container {
+  display: flex; height: 100%; align-items: flex-end;
 }
-
-/* 5. CodeMirror 深度样式覆盖 */
-:deep(.cm-editor) {
-  height: 100%; 
-  outline: none;
-  background: #0d0d0d !important;
-}
-
-:deep(.cm-scroller) {
-  overflow: auto !important; /* 强制开启滚动 */
-  height: 100% !important;
-  font-family: 'Fira Code', 'Consolas', monospace;
-  line-height: 1.6;
-}
-
-:deep(.cm-gutters) {
-  background-color: var(--panel-color);
-  border-right: 1px solid var(--border-color);
-  color: var(--text-secondary);
-}
-
-/* --- 原有样式保持不变 --- */
-.tabs { display: flex; height: 100%; }
-.tab-btn {
+.editor-tab {
   background: transparent;
   color: var(--text-secondary);
   border: none;
-  border-bottom: 2px solid transparent;
-  padding: 0 15px;
-  font-size: 0.85rem;
   height: 100%;
+  padding: 0 16px;
+  font-size: 0.8rem;
   cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
   transition: all 0.2s;
+  border-top: 2px solid transparent; /* 顶部高亮条预留 */
 }
-.tab-btn:hover { color: var(--text-primary); }
-.tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
-.lang-tag { font-size: 0.75rem; color: var(--text-secondary); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; }
+.editor-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+.editor-tab.active {
+  color: #fff;
+  background: #0d0d0d; /* 与编辑器背景融为一体 */
+  border-top-color: var(--primary-color);
+}
+.tab-icon { opacity: 0.7; font-size: 0.9rem; }
 
-/* 上传区域适配 */
-.upload-area {
-  height: 100%; /* 填满 .editor-body-area */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(255,255,255,0.02);
-}
-.upload-box {
-  text-align: center;
-  border: 2px dashed var(--border-color);
-  padding: 40px;
-  border-radius: 12px;
+/* 语言指示器 */
+.lang-indicator {
+  margin-left: auto;
+  font-size: 0.7rem;
   color: var(--text-secondary);
-  transition: all 0.2s;
+  font-family: monospace;
+  background: rgba(255,255,255,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
-.upload-box:hover { border-color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
-.icon { font-size: 3rem; margin-bottom: 15px; opacity: 0.7; }
-.upload-btn {
+
+/* 主体区域 */
+.editor-body-area {
+  flex: 1; position: relative; min-height: 0; width: 100%;
+  background: #0d0d0d;
+}
+
+/* CodeMirror 修正 */
+.cm-layout-fixer {
+  position: absolute; top: 0; bottom: 0; left: 0; right: 0; height: 100%;
+}
+:deep(.cm-editor) { height: 100%; outline: none; background: #0d0d0d !important; }
+:deep(.cm-scroller) {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  line-height: 1.6;
+}
+:deep(.cm-gutters) {
+  background-color: #0d0d0d;
+  border-right: 1px solid #2b2b2b;
+  color: #4a4a4a;
+}
+
+/* 拖拽上传美化 */
+.upload-area {
+  height: 100%;
+  display: flex; justify-content: center; align-items: center;
+  background: radial-gradient(circle at center, rgba(30,30,30,1) 0%, rgba(13,13,13,1) 100%);
+}
+.upload-box-modern {
+  text-align: center;
+  border: 2px dashed rgba(255,255,255,0.1);
+  padding: 40px;
+  border-radius: 16px;
+  transition: all 0.3s;
+  background: rgba(255,255,255,0.01);
+}
+.upload-area:hover .upload-box-modern {
+  border-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.05);
+  transform: scale(1.02);
+}
+.upload-icon-anim { font-size: 3.5rem; margin-bottom: 16px; opacity: 0.8; animation: float 3s infinite ease-in-out; }
+.upload-title { margin: 0 0 8px 0; font-weight: 600; color: var(--text-primary); }
+.upload-subtitle { margin: 0 0 20px 0; font-size: 0.8rem; color: var(--text-secondary); }
+
+.btn-select-file {
   display: inline-block;
-  background: var(--primary-color);
-  color: white;
-  padding: 8px 20px;
-  border-radius: 6px;
-  margin: 10px 0;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: filter 0.2s;
+  background: var(--primary-color); color: white;
+  padding: 10px 24px; border-radius: 8px; cursor: pointer;
+  font-size: 0.9rem; font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
-.upload-btn:hover { filter: brightness(1.1); }
-.upload-btn input { display: none; }
-.limit-tip { font-size: 0.8rem; opacity: 0.6; margin: 5px 0; }
+.btn-select-file:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.btn-select-file input { display: none; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
 </style>
