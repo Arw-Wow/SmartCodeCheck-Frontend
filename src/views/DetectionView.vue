@@ -28,7 +28,7 @@
           </div>
 
           <div class="config-item">
-            <label class="config-label">模型引擎</label>
+            <label class="config-label">模型选择</label>
             <div class="custom-select-wrapper">
               <select v-model="store.detection.modelName">
                 <option value="deepseek-v3.1">DeepSeek V3.1</option>
@@ -36,7 +36,7 @@
                 <option value="gpt-5-mini">GPT-5 Mini</option>
                 <option value="gpt-5">GPT-5</option>
                 <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
-                <option value="my-finetuned-model">官方微调模型</option>
+                <option value="my-finetuned-model">my-finetuned-model</option>
               </select>
             </div>
           </div>
@@ -55,7 +55,7 @@
             @click="handleAnalyze" 
             class="btn-action primary"
           >
-            <span class="icon">🚀</span>深度分析
+            <span class="icon">⚡</span>深度分析
           </button>
           <button 
             v-else
