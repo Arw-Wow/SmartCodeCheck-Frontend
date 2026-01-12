@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api'
 import router from '@/router'
+import { useGlobalDataStore } from '@/stores/index'
 
 export const useAuthStore = defineStore(
   'auth',
@@ -51,8 +52,15 @@ export const useAuthStore = defineStore(
 
     // 登出动作
     const logout = () => {
+      // 清除 Auth 信息
       token.value = ''
       user.value = null
+      
+      // 清除全局业务数据 (防止下一个用户看到)
+      const globalStore = useGlobalDataStore()
+      globalStore.resetState()
+
+      // 跳转
       router.push('/login')
     }
 

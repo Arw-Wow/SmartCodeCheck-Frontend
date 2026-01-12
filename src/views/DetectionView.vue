@@ -23,7 +23,6 @@
           <option value="gpt-5-mini">gpt-5-mini</option>
           <option value="gpt-5">gpt-5</option>
           <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
-
           <option value="my-finetuned-model">my-finetuned-model</option>
         </select>
       </div>
@@ -69,45 +68,71 @@
     </main>
 
     <aside class="result-sidebar">
-      <div class="sidebar-header">
-        <h3>检测报告</h3>
-        <div v-if="store.detection.results" class="export-tools">
-          <button @click="exportJSON" class="btn-icon" title="导出 JSON">JSON</button>
-          <button @click="exportMD" class="btn-icon" title="导出 Markdown">Markdown</button>
-          <!-- ⬇️暂时不要PDF，科研人员不咋用，并且效果也不好，并且结果不适合表达为PDF -->
-          <!-- <button @click="printPDF" class="btn-icon" title="打印/存为 PDF">🖨️</button> -->
-        </div>
-      </div>
-      
-      <div v-if="!store.detection.results && !isAnalyzing" class="empty-state">
-        请配置并点击开始检测。
-      </div>
-
-      <div v-if="isAnalyzing" class="loading-state">
-        <div class="spinner"></div>
-        <p>模型正在深度分析代码...</p>
-        <small class="tip">包含自定义维度的分析可能需要更多时间</small>
+      <div class="tabs-header">
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'result' }"
+          @click="activeTab = 'result'"
+        >
+          📊 分析结果
+        </button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'history' }"
+          @click="loadHistory"
+        >
+          🕒 历史记录
+        </button>
       </div>
 
-      <div v-if="store.detection.results" class="results-content">
-        <div class="score-card">
-          <span class="score-label">综合得分</span>
-          <span class="score-val" :class="getScoreClass(store.detection.results.score)">
-            {{ store.detection.results.score }}
-          </span>
-        </div>
-        
-        <div class="issue-list">
-          <div v-for="(issue, index) in store.detection.results.issues" :key="index" class="issue-item">
-            <div class="issue-header">
-              <span class="badge" :class="issue.type">{{ issue.type }}</span>
-              <span class="dim-tag">{{ issue.dimension }}</span>
-              <span v-if="issue.line" class="line-tag">Line {{ issue.line }}</span>
-            </div>
-            <p class="issue-desc">{{ issue.description }}</p>
-            <div class="issue-suggestion">💡 建议: {{ issue.suggestion }}</div>
+      <div v-show="activeTab === 'result'" class="tab-content">
+        <div class="sidebar-header">
+          <h3>检测报告</h3>
+          <div v-if="store.detection.results" class="export-tools">
+            <button @click="exportJSON" class="btn-icon" title="导出 JSON">JSON</button>
+            <button @click="exportMD" class="btn-icon" title="导出 Markdown">Markdown</button>
           </div>
         </div>
+        
+        <div v-if="!store.detection.results && !isAnalyzing" class="empty-state">
+          请配置并点击开始检测。
+        </div>
+
+        <div v-if="isAnalyzing" class="loading-state">
+          <div class="spinner"></div>
+          <p>模型正在深度分析代码...</p>
+          <small class="tip">包含自定义维度的分析可能需要更多时间</small>
+        </div>
+
+        <div v-if="store.detection.results" class="results-content">
+          <div class="score-card">
+            <span class="score-label">综合得分</span>
+            <span class="score-val" :class="getScoreClass(store.detection.results.score)">
+              {{ store.detection.results.score }}
+            </span>
+          </div>
+          
+          <div class="issue-list">
+            <div v-for="(issue, index) in store.detection.results.issues" :key="index" class="issue-item">
+              <div class="issue-header">
+                <span class="badge" :class="issue.type">{{ issue.type }}</span>
+                <span class="dim-tag">{{ issue.dimension }}</span>
+                <span v-if="issue.line" class="line-tag">Line {{ issue.line }}</span>
+              </div>
+              <p class="issue-desc">{{ issue.description }}</p>
+              <div class="issue-suggestion">💡 建议: {{ issue.suggestion }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-show="activeTab === 'history'" class="tab-content">
+        <HistoryList 
+          :records="store.historyList" 
+          :loading="historyLoading"
+          @restore="handleRestore"
+          @delete="handleDeleteHistory"
+        />
       </div>
     </aside>
   </div>
@@ -116,20 +141,25 @@
 <script setup>
 import { ref } from 'vue'
 import { useGlobalDataStore } from '@/stores/index'
+import { useToastStore } from '@/stores/toast'
 import api from '@/api'
 import DimensionSelector from '@/components/analysis/DimensionSelector.vue'
 import CodeEditor from '@/components/analysis/CodeEditor.vue'
+import HistoryList from '@/components/common/HistoryList.vue'
 import { downloadFile, generateDetectionMarkdown } from '@/utils/export'
 
 // 创建store实例
 const store = useGlobalDataStore()
+const toast = useToastStore()
 
 const isAnalyzing = ref(false)
 const errorMessage = ref('')
-let abortController = null // 用于存储当前的 AbortController
+const activeTab = ref('result') // 控制 Tab 切换
+const historyLoading = ref(false) // 历史记录加载状态
+let abortController = null 
 
 const handleAnalyze = async () => {
-  // 1. 基础校验
+  // 基础校验
   if (!store.detection.code.trim()) return alert('请输入代码')
   if (store.detection.selectedDimensions.length === 0) return alert('请至少选择一个维度')
 
@@ -137,7 +167,10 @@ const handleAnalyze = async () => {
   store.detection.results = null
   errorMessage.value = ''
   
-  // 2. 初始化 AbortController
+  // 切换回结果 Tab
+  activeTab.value = 'result'
+  
+  // 初始化 AbortController
   abortController = new AbortController()
 
   try {
@@ -146,14 +179,19 @@ const handleAnalyze = async () => {
       language: store.detection.language,
       model_name: store.detection.modelName,
       dimensions: store.detection.selectedDimensions,
-      custom_definitions: store.customDefinitions, // 发送自定义定义
+      custom_definitions: store.customDefinitions,
       generation_instruction: store.detection.generationInstruction?.trim() || undefined
     }
 
-    // 3. 调用 API (传入 signal)
+    // 调用 API
     const response = await api.analyzeCode(payload, abortController.signal)
     
     store.detection.results = response.data
+
+    // 成功后自动保存到历史记录 (异步执行，不阻塞 UI)
+    store.saveToHistory('detection').then(() => {
+      toast.success('结果已保存至历史记录', 1000)
+    }).catch(err => console.error('自动保存历史失败', err))
     
   } catch (error) {
     if (error.name === 'CanceledError' || error.message === 'canceled') {
@@ -175,6 +213,29 @@ const handleStop = () => {
   }
 }
 
+// 历史记录相关逻辑
+const loadHistory = async () => {
+  activeTab.value = 'history'
+  historyLoading.value = true
+  await store.fetchHistory('detection')
+  historyLoading.value = false
+}
+
+const handleRestore = (record) => {
+  if (confirm('恢复历史记录将覆盖当前编辑器内容，确定吗？')) {
+    store.restoreHistory(record)
+    activeTab.value = 'result'
+    toast.success('已恢复历史记录')
+  }
+}
+
+const handleDeleteHistory = async (id) => {
+  if (confirm('确定删除这条记录吗？')) {
+    await store.removeHistory(id, 'detection')
+    toast.success('删除成功')
+  }
+}
+
 // 导出功能
 const exportJSON = () => {
   const data = JSON.stringify(store.detection.results, null, 2)
@@ -184,10 +245,6 @@ const exportJSON = () => {
 const exportMD = () => {
   const md = generateDetectionMarkdown(store.detection.results, store.detection.language)
   downloadFile(md, `analysis_report_${Date.now()}.md`, 'text/markdown')
-}
-
-const printPDF = () => {
-  window.print()
 }
 
 const getScoreClass = (score) => {
@@ -202,13 +259,13 @@ const getScoreClass = (score) => {
 .container {
   width: 100%;
   max-width: 1300px;
-  padding: 0 20px; /* 保留少量左右内边距，避免内容贴边 */
-  margin: 0 auto; /* 保持居中 */
+  padding: 0 20px;
+  margin: 0 auto;
 }
 
 .detection-layout {
   display: grid;
-  grid-template-columns: 280px 1fr 320px; /* 稍微加宽两边 */
+  grid-template-columns: 280px 1fr 320px;
   gap: 20px;
   height: calc(100vh - 100px);
 }
@@ -220,6 +277,28 @@ select { width: 100%; padding: 8px; background: var(--bg-color); color: #fff; bo
 /* 按钮样式 */
 .btn-danger { background: var(--danger); color: white; transition: all 0.2s; }
 .btn-danger:hover { background: #b91c1c; }
+
+/* Tabs 样式 */
+.tabs-header {
+  display: flex;
+  background: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
+  margin: -20px -20px 20px -20px; /* 抵消 result-sidebar 的 padding */
+  padding: 0 10px;
+}
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 12px 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+.tab-content { flex: 1; display: flex; flex-direction: column; }
 
 /* 打印样式 */
 @media print {
@@ -259,21 +338,23 @@ select { width: 100%; padding: 8px; background: var(--bg-color); color: #fff; bo
 
 /* 指令编辑框样式 */
 .instruction-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; padding: 8px 12px; }
-.instruction-input { width: 100%; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; }
+.instruction-input { 
+  width: 100%; 
+  box-sizing: border-box; /* 防止宽度溢出 */
+  background: var(--bg-color); 
+  color: var(--text-primary); 
+  border: 1px solid var(--border-color); 
+  border-radius: 6px; 
+  padding: 8px; 
+  font-family: inherit; /* 保持字体一致 */
+  resize: vertical; /* 允许用户垂直拉伸，禁止水平拉伸破坏布局 */
+}
 
-/* ========== 调整CodeEditor高度 ========== */
+/* CodeEditor 高度调整 */
 .editor-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto; /* 防止内容溢出 */
-}
-
-/* 控制代码编辑器容器高度 */
-.code-editor-container {
-  flex: 1;
-  max-height: 40vh; /* 核心：将编辑器最大高度限制为视口的40% */
-  min-height: 200px; /* 保证最小高度，避免编辑器过矮 */
   overflow-y: auto;
 }
 </style>

@@ -83,59 +83,93 @@
       </div>
     </div>
     
-    <div v-if="store.comparison.results" id="diff-print-area" class="diff-result">
-      
-      <div class="result-header">
-        <h3>🏆 分析报告</h3>
-        <div class="export-group">
-          <button @click="exportJSON" class="btn-xs" title="导出 JSON">JSON</button>
-          <button @click="exportMD" class="btn-xs" title="导出 Markdown">Markdown</button>
-          <!-- <button @click="printPDF" class="btn-xs" title="打印或保存为 PDF">🖨️ PDF</button> -->
+    <div class="bottom-panel">
+      <div class="tabs-header">
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'result' }"
+          @click="activeTab = 'result'"
+        >
+          📊 分析结果
+        </button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'history' }"
+          @click="loadHistory"
+        >
+          🕒 历史记录
+        </button>
+      </div>
+
+      <div v-show="activeTab === 'result'" class="tab-content">
+        
+        <div v-if="!store.comparison.results && !isComparing" class="empty-state">
+          请输入代码并点击右上角“运行对比分析”查看报告。
         </div>
-      </div>
 
-      <div class="summary-section">
-        <p class="summary-text">{{ store.comparison.results.summary }}</p>
-      </div>
+        <div v-if="isComparing" class="comparing-overlay">
+           <div class="spinner"></div>
+           <p>正在对比两段代码的逻辑与性能...</p>
+        </div>
 
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <h4>总体评分</h4>
-          <div class="score-row">
-            <div class="score-item">
-              <span class="label">Model A</span>
-              <span class="val color-a">{{ store.comparison.results.score_a }}</span>
+        <div v-if="store.comparison.results" id="diff-print-area" class="diff-result">
+          <div class="result-header">
+            <h3>🏆 分析报告</h3>
+            <div class="export-group">
+              <button @click="exportJSON" class="btn-xs" title="导出 JSON">JSON</button>
+              <button @click="exportMD" class="btn-xs" title="导出 Markdown">Markdown</button>
             </div>
-            <div class="vs">VS</div>
-            <div class="score-item">
-              <span class="label">Model B</span>
-              <span class="val color-b">{{ store.comparison.results.score_b }}</span>
+          </div>
+
+          <div class="summary-section">
+            <p class="summary-text">{{ store.comparison.results.summary }}</p>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <h4>总体评分</h4>
+              <div class="score-row">
+                <div class="score-item">
+                  <span class="label">Model A</span>
+                  <span class="val color-a">{{ store.comparison.results.score_a }}</span>
+                </div>
+                <div class="vs">VS</div>
+                <div class="score-item">
+                  <span class="label">Model B</span>
+                  <span class="val color-b">{{ store.comparison.results.score_b }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <h4>维度明细</h4>
+              <div v-for="(scores, dim) in store.comparison.results.dimension_scores" :key="dim" class="dim-row">
+                <span class="dim-name" :title="dim">{{ dim }}</span>
+                <div class="bar-container">
+                  <div class="bar-wrapper">
+                    <div class="bar bar-a" :style="{ width: scores[0] + '%' }"></div>
+                    <span class="bar-val">{{ scores[0] }}</span>
+                  </div>
+                  <div class="bar-wrapper">
+                    <div class="bar bar-b" :style="{ width: scores[1] + '%' }"></div>
+                    <span class="bar-val">{{ scores[1] }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        <div class="metric-card">
-          <h4>维度明细</h4>
-          <div v-for="(scores, dim) in store.comparison.results.dimension_scores" :key="dim" class="dim-row">
-            <span class="dim-name" :title="dim">{{ dim }}</span>
-            <div class="bar-container">
-              <div class="bar-wrapper">
-                <div class="bar bar-a" :style="{ width: scores[0] + '%' }"></div>
-                <span class="bar-val">{{ scores[0] }}</span>
-              </div>
-              <div class="bar-wrapper">
-                <div class="bar bar-b" :style="{ width: scores[1] + '%' }"></div>
-                <span class="bar-val">{{ scores[1] }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
-    </div>
 
-    <div v-if="isComparing && !store.comparison.results" class="comparing-overlay">
-       <div class="spinner"></div>
-       <p>正在对比两段代码的逻辑与性能...</p>
+      <div v-show="activeTab === 'history'" class="tab-content history-container">
+         <HistoryList 
+          :records="store.historyList" 
+          :loading="historyLoading"
+          @restore="handleRestore"
+          @delete="handleDeleteHistory"
+        />
+      </div>
+
     </div>
   </div>
 </template>
@@ -143,20 +177,23 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useGlobalDataStore } from '@/stores/index'
+import { useToastStore } from '@/stores/toast'
 import api from '@/api'
 import { downloadFile, generateComparisonMarkdown } from '@/utils/export'
 import CodeEditor from '@/components/analysis/CodeEditor.vue'
 import DimensionSelector from '@/components/analysis/DimensionSelector.vue'
+import HistoryList from '@/components/common/HistoryList.vue' // 引入组件
 
-// 创建store实例
 const store = useGlobalDataStore()
+const toast = useToastStore()
 
 const isComparing = ref(false)
+const activeTab = ref('result') // 控制 Tab 切换
+const historyLoading = ref(false)
 let abortController = null
 
 const customCount = computed(() => Object.keys(store.customDefinitions).length)
 
-// 可选模型列表（单选）
 const modelOptions = [
   'deepseek-v3.1',
   'qwen3-coder-plus',
@@ -172,6 +209,8 @@ const handleCompare = async () => {
   
   isComparing.value = true
   store.comparison.results = null
+  activeTab.value = 'result' // 开始分析时自动切回结果 Tab
+  
   abortController = new AbortController()
   
   try {
@@ -188,6 +227,9 @@ const handleCompare = async () => {
     const res = await api.compareCodes(payload, abortController.signal)
     store.comparison.results = res.data
 
+    // 🌟 成功后自动保存历史 (异步)
+    store.saveToHistory('comparison').catch(err => console.error('History save failed:', err))
+
   } catch (error) {
     if (error.name !== 'CanceledError') {
       alert('对比失败: ' + error.message)
@@ -202,7 +244,30 @@ const handleStop = () => {
   if (abortController) abortController.abort()
 }
 
-// 导出功能实现
+// 🌟 历史记录逻辑
+const loadHistory = async () => {
+  activeTab.value = 'history'
+  historyLoading.value = true
+  await store.fetchHistory('comparison') // 获取对比类型的历史
+  historyLoading.value = false
+}
+
+const handleRestore = (record) => {
+  if (confirm('恢复记录将覆盖当前的 Code A 和 Code B，确定吗？')) {
+    store.restoreHistory(record)
+    activeTab.value = 'result'
+    toast.success('已恢复历史记录')
+  }
+}
+
+const handleDeleteHistory = async (id) => {
+  if (confirm('确定删除这条记录吗？')) {
+    await store.removeHistory(id, 'comparison')
+    toast.success('删除成功')
+  }
+}
+
+// 导出功能
 const exportJSON = () => {
   const data = JSON.stringify(store.comparison.results, null, 2)
   downloadFile(data, `comparison_report_${Date.now()}.json`, 'application/json')
@@ -211,10 +276,6 @@ const exportJSON = () => {
 const exportMD = () => {
   const md = generateComparisonMarkdown(store.comparison.results, store.comparison.language)
   downloadFile(md, `comparison_report_${Date.now()}.md`, 'text/markdown')
-}
-
-const printPDF = () => {
-  window.print()
 }
 </script>
 
@@ -240,8 +301,47 @@ summary:hover { color: var(--primary-color); }
 .pane { display: flex; flex-direction: column; }
 .pane-head { margin-bottom: 10px; font-weight: bold; color: var(--accent-color); font-size: 1.1rem; }
 
-/* 结果区域容器 */
-.diff-result { background: var(--panel-color); border-radius: 8px; padding: 30px; border: 1px solid var(--border-color); }
+/* 🌟 底部面板容器 */
+.bottom-panel {
+  background: var(--panel-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  overflow: hidden; /* 防止内容溢出圆角 */
+  min-height: 300px;
+}
+
+/* Tabs 样式 */
+.tabs-header {
+  display: flex;
+  background: rgba(0,0,0,0.2);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 10px;
+}
+.tab-btn {
+  padding: 15px 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
+
+.tab-content { padding: 30px; }
+
+/* 历史列表容器限制高度 */
+.history-container {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* 空状态 */
+.empty-state { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 1.1rem; }
+
+/* 原有结果样式 (稍作调整去掉了外层容器边框，因为现在由 bottom-panel 接管) */
+.diff-result { border: none; padding: 0; background: transparent; }
 
 /* 结果头部样式 */
 .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
@@ -291,20 +391,23 @@ summary:hover { color: var(--primary-color); }
 .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid var(--primary-color); width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* 打印样式适配 */
-@media print {
-  body * { visibility: hidden; }
-  #diff-print-area, #diff-print-area * { visibility: visible; }
-  #diff-print-area { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; }
-  .diff-result { background: white !important; color: black !important; }
-  .export-group { display: none !important; } /* 打印时隐藏导出按钮 */
+/* 指令编辑框样式 */
+.instruction-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; margin-bottom: 15px; padding: 8px 12px; }
+.instruction-input { 
+  width: 100%; 
+  box-sizing: border-box; /* 防止宽度溢出 */
+  background: var(--bg-color); 
+  color: var(--text-primary); 
+  border: 1px solid var(--border-color); 
+  border-radius: 6px; 
+  margin-top: 10px; 
+  margin-bottom: 10px;
+  padding: 8px; 
+  font-family: inherit; /* 保持字体一致 */
+  resize: vertical; /* 允许用户垂直拉伸，禁止水平拉伸破坏布局 */
 }
 
-/* 指令编辑框样式 */
-.instruction-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; padding: 8px 12px; }
-.instruction-input { width: 100%; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; }
-
-/* 模型按钮组（单选） */
+/* 模型按钮组 */
 .model-group { display: flex; flex-wrap: wrap; gap: 8px; }
 .model-btn { 
   padding: 6px 10px;

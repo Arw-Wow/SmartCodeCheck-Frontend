@@ -69,6 +69,18 @@ export default {
     return apiClient.delete(`/dimensions/${encodeURIComponent(name)}`)
   },
 
+  // --- 历史记录接口 ---
+  getHistory(type) {
+    return apiClient.get('/history/', { params: { type } })
+  },
+  createHistory(data) {
+    // data: { type: 'detection' | 'comparison', data: Object }
+    return apiClient.post('/history/', data)
+  },
+  deleteHistory(id) {
+    return apiClient.delete(`/history/${id}`)
+  },
+
   // --- 业务接口 ---
   analyzeCode(data, signal) {
     return apiClient.post('/analyze', data, { signal }) 
